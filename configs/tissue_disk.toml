@@ -1,0 +1,21 @@
+[domain]
+  radius = 0.10
+  refinements = 6
+  minimum_points_per_wavelength = 12.0
+
+  [wave]
+  frequency = 25000.0
+  loss = 0.001
+
+  [medium]
+  kind = "circular_inclusion"
+  background_speed = 1500.0
+  inclusion_center = [0.0, 0.0]
+  inclusion_radius = 0.055
+  inclusion_speed = 1540.0
+
+  [forcing]
+  patterns = ["constant", "cos:1", "sin:1", "cos:2", "sin:2"]
+
+  [units]
+  system = "SI"

@@ -1,0 +1,19 @@
+[domain]
+radius = 1.0
+refinements = 5
+minimum_points_per_wavelength = 12.0
+
+[wave]
+frequency = 0.477464829275686  # omega = 3, so kR = 3 when c = R = 1
+loss = 0.0
+
+[medium]
+kind = "constant"
+background_speed = 1.0
+
+[forcing]
+patterns = ["exp:0", "exp:1", "exp:2"]
+
+[units]
+system = "dimensionless"
+

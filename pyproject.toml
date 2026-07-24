@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "usct-one-frequency"
+version = "0.1.0"
+description = "A trusted one-frequency USCT Dirichlet-to-Neumann forward simulator"
+readme = "README.md"
+requires-python = ">=3.14"
+license = "MIT"
+authors = [{ name = "USCT research team" }]
+dependencies = [
+    "matplotlib>=3.10",
+    "numpy>=2.2",
+    "scikit-fem>=11.0",
+    "scipy>=1.15",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.9",
+]
+
+[project.scripts]
+usct = "usct.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+exclude = [".venv", "old_lowf_inv.py", "runs"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

@@ -1,0 +1,24 @@
+# Python bytecode and test/tool caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Virtual environments and local package metadata
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+
+# Local plotting and IDE state
+.mplconfig/
+.idea/
+.vscode/
+.DS_Store
+
+# Reproducible simulation outputs
+runs/
