@@ -190,7 +190,9 @@ Implemented and trusted:
 
 - configuration validation and points-per-wavelength guard;
 - circular mesh and deterministic DOF partition;
-- constant and one-circular-inclusion sound-speed models;
+- constant, one-circular-inclusion, and feature-phantom (disk/ellipse/ring)
+  sound-speed models, all expressible as TOML configs (the professor's breast
+  phantom is `configs/breast_phantom.toml`);
 - complex Helmholtz assembly;
 - named boundary Fourier patterns;
 - batched sparse direct solve;

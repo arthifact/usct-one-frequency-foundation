@@ -11,7 +11,7 @@ from usct.config import SimulationConfig, validate_config
 from usct.domain import Domain, build_disk
 from usct.forcing import BoundaryForcing, build_boundary_forcing
 from usct.measurement import BoundaryResponse, project_neumann_trace
-from usct.medium import Medium, circular_inclusion, constant_speed
+from usct.medium import Medium, circular_inclusion, constant_speed, feature_speed
 from usct.operator import assemble_helmholtz
 from usct.solver import FieldSolution, solve_dirichlet
 
@@ -50,6 +50,10 @@ def _build_medium(config: SimulationConfig, domain: Domain) -> Medium:
     medium = config.medium
     if medium.kind == "constant":
         return constant_speed(domain, medium.background_speed)
+    if medium.kind == "feature_phantom":
+        return feature_speed(
+            domain, medium.background_speed, medium.sharpness or 1.0, medium.features
+        )
     return circular_inclusion(
         domain,
         medium.background_speed,

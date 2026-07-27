@@ -164,6 +164,8 @@ class Studio(QtWidgets.QMainWindow):
         self._colormap = "amber"
         self._pattern = 0
         self._last: Any = None
+        f0 = self._state["forward"]["params"]["frequency"]
+        self._freq_range = (f0 * 0.05, f0 * 8.0)
 
         self._debounce = QtCore.QTimer(self)
         self._debounce.setSingleShot(True)
@@ -172,6 +174,7 @@ class Studio(QtWidgets.QMainWindow):
 
         self._build_ui()
         self._build_menu()
+        self._populate_configs()  # loads the default config into state
         self._rebuild_params()
         self._solve()
 
@@ -212,17 +215,12 @@ class Studio(QtWidgets.QMainWindow):
         self._mesh_group = self._pill_row(col, "Mesh", [3, 4, 5, 6],
                                           self._state["mesh"]["params"]["refinements"],
                                           self._on_mesh, str)
-        medium_names = [c["name"] for c in self._schema("medium")]
-        labels = {"constant": "const", "circular_inclusion": "disk", "feature_phantom": "phantom"}
-        self._medium_group = self._pill_row(col, "Medium", medium_names,
-                                            self._state["medium"]["component"],
-                                            self._on_medium, lambda n: labels.get(n, n))
 
         col.addWidget(_hline())
-        col.addWidget(_section("Phantom"))
-        self._preset = QtWidgets.QComboBox()
-        self._preset.currentTextChanged.connect(self._on_preset)
-        col.addWidget(self._preset)
+        col.addWidget(_section("Medium  ·  from configs/*.toml"))
+        self._config_combo = QtWidgets.QComboBox()
+        self._config_combo.currentTextChanged.connect(self._on_config)
+        col.addWidget(self._config_combo)
 
         col.addWidget(_hline())
         col.addWidget(_section("Colour Scheme"))
@@ -250,7 +248,7 @@ class Studio(QtWidgets.QMainWindow):
         col.addLayout(sw_row)
 
         col.addWidget(_hline())
-        col.addWidget(_section("Physics Parameters"))
+        col.addWidget(_section("Wave  ·  live"))
         self._param_box = QtWidgets.QVBoxLayout()
         self._param_box.setSpacing(2)
         col.addLayout(self._param_box)
@@ -361,7 +359,7 @@ class Studio(QtWidgets.QMainWindow):
             act.triggered.connect(slot)
             filemenu.addAction(act)
 
-    # ---- parameter panel (depends on selected medium) ----
+    # ---- Wave panel: only the live forward-model knobs (medium comes from configs) ----
     def _rebuild_params(self) -> None:
         while self._param_box.count():
             item = self._param_box.takeAt(0)
@@ -369,39 +367,11 @@ class Studio(QtWidgets.QMainWindow):
                 item.widget().deleteLater()
 
         fwd = self._state["forward"]["params"]
-        self._add_slider("f", 0.05, 4.0, fwd["frequency"], 3,
+        lo, hi = self._freq_range
+        self._add_slider("f", lo, hi, min(max(fwd["frequency"], lo), hi), _digits_for(hi),
                          lambda v: self._set("forward", "frequency", v))
-        self._add_slider("eta", 0.0, 0.05, fwd["loss"], 3,
+        self._add_slider("eta", 0.0, max(0.05, fwd["loss"] * 5 or 0.05), fwd["loss"], 3,
                          lambda v: self._set("forward", "loss", v))
-        med = self._state["medium"]
-        p = med["params"]
-        if med["component"] == "feature_phantom" and p.get("preset") == "custom":
-            self._add_slider("s", 1.0, 200.0, p["sharpness"], 0,
-                             lambda v: self._set("medium", "sharpness", v))
-            self._add_slider("c", 0.5, 2.0, p["background_speed"], 2,
-                             lambda v: self._set("medium", "background_speed", v))
-        elif med["component"] == "circular_inclusion":
-            self._add_slider("r", 0.02, 0.9, p["radius"], 3,
-                             lambda v: self._set("medium", "radius", v))
-            self._add_slider("c", 0.5, 2.5, p["inclusion_speed"], 2,
-                             lambda v: self._set("medium", "inclusion_speed", v))
-        elif med["component"] == "constant":
-            self._add_slider("c", 0.5, 2.5, p["background_speed"], 2,
-                             lambda v: self._set("medium", "background_speed", v))
-
-        # phantom preset combo enabled only for feature_phantom
-        self._preset.blockSignals(True)
-        self._preset.clear()
-        preset_param = next((q for q in self._component("medium", med["component"])["params"]
-                             if q["name"] == "preset"), None)
-        if preset_param:
-            self._preset.addItems(preset_param["choices"])
-            self._preset.setCurrentText(p.get("preset", preset_param["choices"][0]))
-            self._preset.setEnabled(True)
-        else:
-            self._preset.addItem("— n/a for " + med["component"])
-            self._preset.setEnabled(False)
-        self._preset.blockSignals(False)
 
         # forcing patterns
         self._pattern_combo.blockSignals(True)
@@ -428,18 +398,43 @@ class Studio(QtWidgets.QMainWindow):
         self._state["mesh"]["params"]["refinements"] = value
         self._debounce.start()
 
-    def _on_medium(self, name: str) -> None:
-        comp = self._component("medium", name)
-        self._state["medium"] = {"component": name, "params": _defaults(comp)}
+    # ---- config-driven medium selection ----
+    def _populate_configs(self) -> None:
+        self._config_paths = _discover_configs()
+        self._config_combo.blockSignals(True)
+        self._config_combo.clear()
+        self._config_combo.addItems([p.stem for p in self._config_paths])
+        if self._config_paths:
+            default = next((p for p in self._config_paths if p.stem == "breast_phantom"),
+                           self._config_paths[0])
+            self._config_combo.setCurrentText(default.stem)
+        self._config_combo.blockSignals(False)
+        if self._config_paths:
+            self._load_config(default)
+
+    def _on_config(self, stem: str) -> None:
+        path = next((p for p in self._config_paths if p.stem == stem), None)
+        if path is None:
+            return
+        self._load_config(path)
         self._rebuild_params()
         self._debounce.start()
 
-    def _on_preset(self, name: str) -> None:
-        if name.startswith("—"):
+    def _load_config(self, path: Path) -> None:
+        try:
+            config = load_config(path)
+        except Exception as error:
+            QtWidgets.QMessageBox.warning(self, "Cannot load config", f"{path.name}: {error}")
             return
-        self._state["medium"]["params"]["preset"] = name
-        self._rebuild_params()
-        self._debounce.start()
+        self._state["mesh"]["params"].update(
+            radius=config.domain.radius, refinements=config.domain.refinements)
+        self._state["forward"]["params"].update(
+            frequency=config.wave.frequency, loss=config.wave.loss)
+        self._state["forcing"]["params"]["patterns"] = list(config.forcing.patterns)
+        self._state["medium"] = _medium_state(config.medium)
+        f0 = config.wave.frequency
+        self._freq_range = (f0 * 0.05, f0 * 8.0)
+        self._sync_mesh_pills()
 
     def _on_colormap(self, name: str) -> None:
         self._colormap = name
@@ -463,11 +458,9 @@ class Studio(QtWidgets.QMainWindow):
     def _bg_speed(self) -> float:
         med = self._state["medium"]
         p = med["params"]
-        if med["component"] == "feature_phantom":
-            return p["background_speed"] if p.get("preset") == "custom" else 1.0
         if med["component"] == "circular_inclusion":
             return min(p["background_speed"], p["inclusion_speed"])
-        return p["background_speed"]
+        return p.get("background_speed", 1.0)
 
     # ---- run the real engine ----
     def _spec(self) -> PipelineSpec:
@@ -567,29 +560,11 @@ class Studio(QtWidgets.QMainWindow):
 
     # ---- file operations ----
     def _open_config(self) -> None:
-        path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open config", "", "TOML (*.toml)")
+        start = str(_discover_configs()[0].parent) if _discover_configs() else ""
+        path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open config", start, "TOML (*.toml)")
         if not path:
             return
-        try:
-            config = load_config(Path(path))
-        except Exception as error:
-            QtWidgets.QMessageBox.warning(self, "Cannot load config", str(error))
-            return
-        self._state["mesh"]["params"].update(
-            radius=config.domain.radius, refinements=config.domain.refinements)
-        self._state["forward"]["params"].update(
-            frequency=config.wave.frequency, loss=config.wave.loss)
-        self._state["forcing"]["params"]["patterns"] = list(config.forcing.patterns)
-        med = config.medium
-        if med.kind == "constant":
-            self._state["medium"] = {"component": "constant",
-                                     "params": {"background_speed": med.background_speed}}
-        elif med.kind == "circular_inclusion":
-            self._state["medium"] = {"component": "circular_inclusion", "params": {
-                "background_speed": med.background_speed,
-                "center": list(med.inclusion_center),
-                "radius": med.inclusion_radius, "inclusion_speed": med.inclusion_speed}}
-        self._sync_pills()
+        self._load_config(Path(path))
         self._rebuild_params()
         self._solve()
 
@@ -627,13 +602,46 @@ class Studio(QtWidgets.QMainWindow):
         )
         self.statusBar().showMessage(f"wrote {path}", 4000)
 
-    def _sync_pills(self) -> None:
+    def _sync_mesh_pills(self) -> None:
+        want = str(self._state["mesh"]["params"]["refinements"])
         for b in self._mesh_group.buttons():
-            b.setChecked(b.text() == str(self._state["mesh"]["params"]["refinements"]))
-        labels = {"constant": "const", "circular_inclusion": "disk", "feature_phantom": "phantom"}
-        want = labels.get(self._state["medium"]["component"], self._state["medium"]["component"])
-        for b in self._medium_group.buttons():
             b.setChecked(b.text() == want)
+
+
+def _discover_configs() -> list[Path]:
+    """Return the available config .toml paths (cwd/configs, then repo configs)."""
+
+    candidates = [Path.cwd() / "configs", Path(__file__).resolve().parents[3] / "configs"]
+    for directory in candidates:
+        if directory.is_dir():
+            return sorted(directory.glob("*.toml"))
+    return []
+
+
+def _medium_state(medium) -> dict[str, Any]:
+    """Map a foundation MediumConfig onto an engine medium component + params."""
+
+    if medium.kind == "constant":
+        return {"component": "constant",
+                "params": {"background_speed": medium.background_speed}}
+    if medium.kind == "circular_inclusion":
+        return {"component": "circular_inclusion", "params": {
+            "background_speed": medium.background_speed,
+            "center": list(medium.inclusion_center),
+            "radius": medium.inclusion_radius,
+            "inclusion_speed": medium.inclusion_speed}}
+    # feature_phantom: pass the explicit features straight through (preset "custom")
+    return {"component": "feature_phantom", "params": {
+        "preset": "custom",
+        "background_speed": medium.background_speed,
+        "sharpness": medium.sharpness,
+        "features": [dict(f) for f in medium.features]}}
+
+
+def _digits_for(hi: float) -> int:
+    """Slider label precision: fine for dimensionless, coarse for large (SI) values."""
+
+    return 0 if hi >= 100 else 3
 
 
 def _section(text: str) -> QtWidgets.QLabel:

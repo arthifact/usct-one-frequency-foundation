@@ -2,13 +2,15 @@
 
 import tomllib
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
 from usct.domain import build_disk
 from usct.forcing import parse_pattern_name
+from usct.medium import feature_speed
 
 
 @dataclass(frozen=True)
@@ -31,13 +33,15 @@ class WaveConfig:
 
 @dataclass(frozen=True)
 class MediumConfig:
-    """Constant or circular-inclusion nodal sound-speed model."""
+    """Constant, circular-inclusion, or feature-phantom nodal sound-speed model."""
 
     kind: str
     background_speed: float
     inclusion_center: tuple[float, float] = (0.0, 0.0)
     inclusion_radius: float | None = None
     inclusion_speed: float | None = None
+    sharpness: float | None = None
+    features: tuple[Mapping[str, Any], ...] = field(default_factory=tuple)
 
 
 @dataclass(frozen=True)
@@ -76,10 +80,30 @@ def _table(data: Mapping[str, object], name: str) -> Mapping[str, object]:
     return value
 
 
+def _parse_feature(feature: object, index: int) -> dict[str, Any]:
+    if not isinstance(feature, Mapping):
+        raise ValueError(f"medium.feature[{index}] must be a table")
+    kind = str(feature.get("type", ""))
+    out: dict[str, Any] = {"type": kind, "label": str(feature.get("label", kind))}
+    for key in ("center", "semi_axes"):
+        if key in feature:
+            pair = feature[key]
+            if not isinstance(pair, (list, tuple)) or len(pair) != 2:
+                raise ValueError(f"medium.feature[{index}].{key} must contain two numbers")
+            out[key] = (float(pair[0]), float(pair[1]))
+    for key in ("radius", "half_width", "contrast"):
+        if key in feature:
+            out[key] = float(feature[key])
+    return out
+
+
 def _medium_from_table(table: Mapping[str, object]) -> MediumConfig:
     center_value = table.get("inclusion_center", (0.0, 0.0))
     if not isinstance(center_value, (list, tuple)) or len(center_value) != 2:
         raise ValueError("medium.inclusion_center must contain exactly two numbers")
+    features_value = table.get("feature", [])
+    if not isinstance(features_value, list):
+        raise ValueError("medium.feature must be an array of [[medium.feature]] tables")
     return MediumConfig(
         kind=str(table.get("kind", "")),
         background_speed=float(table.get("background_speed", float("nan"))),
@@ -90,6 +114,8 @@ def _medium_from_table(table: Mapping[str, object]) -> MediumConfig:
         inclusion_speed=(
             None if "inclusion_speed" not in table else float(table["inclusion_speed"])
         ),
+        sharpness=(None if "sharpness" not in table else float(table["sharpness"])),
+        features=tuple(_parse_feature(item, i) for i, item in enumerate(features_value)),
     )
 
 
@@ -120,7 +146,15 @@ def _parse_config(data: Mapping[str, object]) -> SimulationConfig:
     )
 
 
-def _minimum_speed(config: SimulationConfig) -> float:
+def _minimum_speed(config: SimulationConfig, domain) -> float:
+    if config.medium.kind == "feature_phantom":
+        medium = feature_speed(
+            domain,
+            config.medium.background_speed,
+            config.medium.sharpness or 1.0,
+            config.medium.features,
+        )
+        return float(np.min(medium.sound_speed))
     speeds = [config.medium.background_speed]
     if config.medium.inclusion_speed is not None:
         speeds.append(config.medium.inclusion_speed)
@@ -131,7 +165,7 @@ def wavelength_diagnostics(config: SimulationConfig) -> WavelengthDiagnostics:
     """Calculate actual ``lambda_min / h_max`` for the generated disk mesh."""
 
     domain = build_disk(config.domain.radius, config.domain.refinements)
-    minimum_speed = _minimum_speed(config)
+    minimum_speed = _minimum_speed(config, domain)
     wavelength = minimum_speed / config.wave.frequency
     return WavelengthDiagnostics(
         minimum_sound_speed=minimum_speed,
@@ -162,9 +196,10 @@ def validate_config(config: SimulationConfig) -> None:
         raise ValueError("domain.refinements must be nonnegative")
     if not np.isfinite(config.wave.loss) or config.wave.loss < 0.0:
         raise ValueError(f"wave.loss must be nonnegative and finite; got {config.wave.loss!r}")
-    if config.medium.kind not in {"constant", "circular_inclusion"}:
+    if config.medium.kind not in {"constant", "circular_inclusion", "feature_phantom"}:
         raise ValueError(f"unsupported medium kind {config.medium.kind!r}")
     _validate_inclusion(config.medium)
+    _validate_feature_phantom(config.medium)
     if not config.forcing.patterns:
         raise ValueError("at least one forcing pattern is required")
     if len(set(config.forcing.patterns)) != len(config.forcing.patterns):
@@ -195,6 +230,29 @@ def _validate_inclusion(medium: MediumConfig) -> None:
         raise ValueError("circular inclusion parameters must be finite")
     if medium.inclusion_radius <= 0.0 or medium.inclusion_speed <= 0.0:
         raise ValueError("inclusion radius and sound speed must be positive")
+
+
+def _validate_feature_phantom(medium: MediumConfig) -> None:
+    if medium.kind != "feature_phantom":
+        return
+    if medium.sharpness is None or not np.isfinite(medium.sharpness) or medium.sharpness <= 0.0:
+        raise ValueError("feature_phantom requires a positive sharpness")
+    if not medium.features:
+        raise ValueError("feature_phantom requires at least one [[medium.feature]]")
+    for index, feature in enumerate(medium.features):
+        kind = feature.get("type")
+        if kind not in {"disk", "ellipse", "ring"}:
+            raise ValueError(f"medium.feature[{index}] has unsupported type {kind!r}")
+        if "center" not in feature:
+            raise ValueError(f"medium.feature[{index}] requires a center")
+        if "contrast" not in feature:
+            raise ValueError(f"medium.feature[{index}] requires a contrast")
+        if kind in {"disk", "ring"} and "radius" not in feature:
+            raise ValueError(f"medium.feature[{index}] ({kind}) requires a radius")
+        if kind == "ring" and "half_width" not in feature:
+            raise ValueError(f"medium.feature[{index}] (ring) requires a half_width")
+        if kind == "ellipse" and "semi_axes" not in feature:
+            raise ValueError(f"medium.feature[{index}] (ellipse) requires semi_axes")
 
 
 def load_config(path: Path) -> SimulationConfig:

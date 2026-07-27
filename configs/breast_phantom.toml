@@ -1,0 +1,58 @@
+# The professor's breast phantom (old_lowf_inv.py alpha_expr), now expressed
+# as data: a constant water background with additive smooth features. Edit the
+# feature tables below to change the tissue; nothing about it is hidden in code.
+[domain]
+radius = 1.0
+refinements = 6
+minimum_points_per_wavelength = 12.0
+
+[wave]
+frequency = 0.477464829275686  # kR = 3 at c = 1
+loss = 0.0
+
+[medium]
+kind = "feature_phantom"
+background_speed = 1.0          # water bath
+sharpness = 80.0                # shared tanh edge steepness
+
+[[medium.feature]]
+type = "ellipse"
+label = "gland"
+center = [0.0275, -0.0275]
+semi_axes = [0.3025, 0.22]
+contrast = 0.3
+
+[[medium.feature]]
+type = "disk"
+label = "lesion_1_high_contrast"
+center = [-0.165, 0.165]
+radius = 0.066
+contrast = 0.8
+
+[[medium.feature]]
+type = "disk"
+label = "lesion_2_cyst"
+center = [0.1375, 0.0825]
+radius = 0.044
+contrast = -0.35
+
+[[medium.feature]]
+type = "disk"
+label = "lesion_3_resolution_test"
+center = [0.055, -0.1925]
+radius = 0.033
+contrast = 0.6
+
+[[medium.feature]]
+type = "ring"
+label = "skin"
+center = [0.0, 0.0]
+radius = 0.55
+half_width = 0.04
+contrast = 0.25
+
+[forcing]
+patterns = ["constant", "cos:1", "sin:1", "cos:2", "sin:2"]
+
+[units]
+system = "dimensionless"
