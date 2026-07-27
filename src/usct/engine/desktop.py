@@ -212,7 +212,7 @@ class Studio(QtWidgets.QMainWindow):
         col.addSpacing(8)
 
         col.addWidget(_section("Engine Settings"))
-        self._mesh_group = self._pill_row(col, "Mesh", [3, 4, 5, 6],
+        self._mesh_group = self._pill_row(col, "Mesh resolution", [3, 4, 5, 6],
                                           self._state["mesh"]["params"]["refinements"],
                                           self._on_mesh, str)
 
@@ -286,6 +286,10 @@ class Studio(QtWidgets.QMainWindow):
         self._fig = Figure(figsize=(6, 3.6), facecolor=PAPER)
         self._ax = self._fig.add_axes((0, 0, 1, 1))
         self._ax.set_facecolor(PAPER)
+        # Anchor the caption to the figure's top-left corner (whitespace beside
+        # the centered disk), reusing one artist so redraws never stack text.
+        self._tag = self._fig.text(0.012, 0.978, "", ha="left", va="top",
+                                    fontsize=9, color=INK, family="monospace")
         self._canvas = FigureCanvas(self._fig)
         self._canvas.setMinimumHeight(360)
         right.addWidget(self._canvas, 1)
@@ -328,7 +332,6 @@ class Studio(QtWidgets.QMainWindow):
     def _pill_row(self, col, label, values, current, handler, textfn):
         row = QtWidgets.QHBoxLayout()
         lab = QtWidgets.QLabel(label)
-        lab.setFixedWidth(64)
         lab.setStyleSheet("color: #7c7350;")
         row.addWidget(lab)
         row.addStretch(1)
@@ -533,8 +536,7 @@ class Studio(QtWidgets.QMainWindow):
         ax.set_ylim(-R * 1.02, R * 1.02)
         ax.set_aspect("equal")
         ax.axis("off")
-        ax.text(0.02, 0.97, tag, transform=ax.transAxes, va="top", ha="left",
-                fontsize=9, color=INK, family="monospace")
+        self._tag.set_text(tag)
         self._canvas.draw_idle()
 
     def _paint_wave(self, data: dict) -> None:
