@@ -22,10 +22,10 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from scipy.interpolate import griddata
 
 from usct.engine import PipelineRunner, PipelineSpec, StageChoice, registry
 from usct.engine.contracts import STAGES
+from usct.engine.sampling import boundary_iq, domain_radius, field_values, rasterize
 
 _STUDIO_HTML = Path(__file__).with_name("studio.html")
 
@@ -45,18 +45,10 @@ def _spec_from(stages: dict[str, Any]) -> PipelineSpec:
     return PipelineSpec(**choices)
 
 
-def _rasterize(coords: np.ndarray, values: np.ndarray, radius: float, n: int) -> list[list]:
-    """Sample nodal FEM values onto an ``n x n`` grid, ``None`` outside the disk."""
+def _grid_to_json(grid: np.ndarray) -> list[list]:
+    """Convert an ``n x n`` float grid to nested lists, ``None`` for ``NaN``."""
 
-    axis = np.linspace(-radius, radius, n)
-    gx, gy = np.meshgrid(axis, axis)
-    grid = griddata(coords, values, (gx, gy), method="linear")
-    outside = (gx**2 + gy**2) > radius**2
-    out: list[list] = []
-    for row_v, row_out in zip(grid, outside, strict=True):
-        out.append([None if (o or not np.isfinite(v)) else round(float(v), 5)
-                    for v, o in zip(row_v, row_out, strict=True)])
-    return out
+    return [[None if not np.isfinite(v) else round(float(v), 5) for v in row] for row in grid]
 
 
 def _run(payload: dict[str, Any]) -> dict[str, Any]:
@@ -68,21 +60,12 @@ def _run(payload: dict[str, Any]) -> dict[str, Any]:
     with _lock:
         result = _runner.run(spec)
 
-    domain = result.domain
-    coords = domain.coordinates
-    radius = float(np.max(np.hypot(coords[:, 0], coords[:, 1])))
+    coords = result.domain.coordinates
+    radius = domain_radius(coords)
     speed = result.medium.sound_speed
-    field = result.forward.solution.field
-    n_patterns = field.shape[1]
-    pattern = max(0, min(pattern, n_patterns - 1))
-
-    values = field[:, pattern].real if view == "wavefield" else speed
-    grid = _rasterize(coords, values, radius, grid_n)
-
-    response = result.response
-    order = np.argsort(response.theta)
-    theta = response.theta[order]
-    channel = response.complex_response[order, pattern]
+    values, pattern, _ = field_values(result, view, pattern)
+    grid = _grid_to_json(rasterize(coords, values, radius, grid_n))
+    theta, channel_i, channel_q = boundary_iq(result, pattern)
 
     freq = float(spec.forward.params.get("frequency", 0.0))
     c_min = float(np.min(speed))
@@ -97,13 +80,13 @@ def _run(payload: dict[str, Any]) -> dict[str, Any]:
         "pattern_names": list(result.forcing.names),
         "response": {
             "theta": [round(float(t), 5) for t in theta],
-            "i": [round(float(v), 6) for v in channel.real],
-            "q": [round(float(v), 6) for v in channel.imag],
+            "i": [round(float(v), 6) for v in channel_i],
+            "q": [round(float(v), 6) for v in channel_q],
         },
         "meta": {
-            "dof": int(domain.basis.N),
-            "triangles": int(domain.triangles.shape[0]),
-            "h_max": float(domain.h_max),
+            "dof": int(result.domain.basis.N),
+            "triangles": int(result.domain.triangles.shape[0]),
+            "h_max": float(result.domain.h_max),
             "radius": radius,
             "frequency": freq,
             "kR": kr,
