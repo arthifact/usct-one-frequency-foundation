@@ -31,7 +31,7 @@ from PySide6 import QtCore, QtGui, QtWidgets  # noqa: E402
 from usct.config import load_config  # noqa: E402
 from usct.engine import PipelineRunner, PipelineSpec, StageChoice, registry  # noqa: E402
 from usct.engine.contracts import STAGES  # noqa: E402
-from usct.engine.sampling import boundary_iq, domain_radius, field_values, rasterize  # noqa: E402
+from usct.engine.sampling import boundary_iq, domain_radius, field_values  # noqa: E402
 
 # ---- palette (Forest Carbon) ----
 PAPER = "#f4ecd6"
@@ -64,7 +64,6 @@ QWidget {{ background: {PAPER}; color: {INK};
   font-family: "SF Mono", "Menlo", "Consolas", monospace; font-size: 12px; }}
 QLabel#logo {{ font-family: "New York", "Georgia", serif; font-weight: 700; font-size: 26px; }}
 QLabel#section {{ color: #655c3c; font-size: 11px; }}
-QLabel#file {{ color: {FILE}; font-size: 11px; }}
 QLabel#metricval {{ font-size: 16px; }}
 QFrame#panel {{ border-right: 1px solid #d9cca6; }}
 QFrame#hline {{ background: #d9cca6; max-height: 1px; min-height: 1px; }}
@@ -200,9 +199,6 @@ class Studio(QtWidgets.QMainWindow):
         self._preset = QtWidgets.QComboBox()
         self._preset.currentTextChanged.connect(self._on_preset)
         col.addWidget(self._preset)
-        self._preset_file = QtWidgets.QLabel("professor_breast")
-        self._preset_file.setObjectName("file")
-        col.addWidget(self._preset_file)
 
         col.addWidget(_hline())
         col.addWidget(_section("Colour Scheme"))
@@ -242,15 +238,24 @@ class Studio(QtWidgets.QMainWindow):
         col.addWidget(self._pattern_combo)
 
         col.addStretch(1)
-        metric = QtWidgets.QHBoxLayout()
-        ml = QtWidgets.QLabel("kR (unit disk)")
-        ml.setObjectName("section")
+        krow = QtWidgets.QHBoxLayout()
+        kl = QtWidgets.QLabel("kR (unit disk)")
+        kl.setObjectName("section")
         self._metric = QtWidgets.QLabel("—")
         self._metric.setObjectName("metricval")
-        metric.addWidget(ml)
-        metric.addStretch(1)
-        metric.addWidget(self._metric)
-        col.addLayout(metric)
+        krow.addWidget(kl)
+        krow.addStretch(1)
+        krow.addWidget(self._metric)
+        col.addLayout(krow)
+        rrow = QtWidgets.QHBoxLayout()
+        rl = QtWidgets.QLabel("resolution")
+        rl.setObjectName("section")
+        self._resolution = QtWidgets.QLabel("—")
+        self._resolution.setObjectName("section")
+        rrow.addWidget(rl)
+        rrow.addStretch(1)
+        rrow.addWidget(self._resolution)
+        col.addLayout(rrow)
         outer.addWidget(panel)
 
         # ---------- right column ----------
@@ -270,7 +275,11 @@ class Studio(QtWidgets.QMainWindow):
         transport.addWidget(run)
         self._view_group = QtWidgets.QButtonGroup(self)
         self._view_group.setExclusive(True)
-        for label, mode in (("Specimen c(x)", "specimen"), ("Wavefield", "wavefield")):
+        for label, mode in (
+            ("Specimen c(x)", "specimen"),
+            ("Wavefield", "wavefield"),
+            ("Mesh", "mesh"),
+        ):
             b = QtWidgets.QPushButton(label)
             b.setProperty("pill", True)
             b.setCheckable(True)
@@ -292,11 +301,6 @@ class Studio(QtWidgets.QMainWindow):
         self._wave_canvas = FigureCanvas(self._wave_fig)
         self._wave_canvas.setFixedHeight(130)
         right.addWidget(self._wave_canvas)
-
-        self._leds = QtWidgets.QLabel("")
-        self._leds.setObjectName("section")
-        self._leds.setWordWrap(True)
-        right.addWidget(self._leds)
         outer.addLayout(right, 1)
 
     def _pill_row(self, col, label, values, current, handler, textfn):
@@ -370,11 +374,9 @@ class Studio(QtWidgets.QMainWindow):
             self._preset.addItems(preset_param["choices"])
             self._preset.setCurrentText(p.get("preset", preset_param["choices"][0]))
             self._preset.setEnabled(True)
-            self._preset_file.setText(p.get("preset", ""))
         else:
             self._preset.addItem("— n/a for " + med["component"])
             self._preset.setEnabled(False)
-            self._preset_file.setText(med["component"])
         self._preset.blockSignals(False)
 
         # forcing patterns
@@ -412,7 +414,6 @@ class Studio(QtWidgets.QMainWindow):
         if name.startswith("—"):
             return
         self._state["medium"]["params"]["preset"] = name
-        self._preset_file.setText(name)
         self._rebuild_params()
         self._debounce.start()
 
@@ -458,54 +459,63 @@ class Studio(QtWidgets.QMainWindow):
         try:
             result = self._runner.run(self._spec())
         except Exception as error:  # keep the window alive, show the message
-            self._leds.setText(f"engine error: {error}")
+            self._clock.setText(f"engine error: {error}")
             self.unsetCursor()
             return
         coords = result.domain.coordinates
         radius = domain_radius(coords)
         values, self._pattern, _ = field_values(result, self._view, self._pattern)
-        grid = rasterize(coords, values, radius, 150)
         theta, ii, qq = boundary_iq(result, self._pattern)
+        c_min = float(np.min(result.medium.sound_speed))
+        freq = self._state["forward"]["params"]["frequency"]
+        wavelength = c_min / max(freq, 1e-9)
         self._last = {
-            "grid": grid, "radius": radius,
+            "x": coords[:, 0], "y": coords[:, 1], "triangles": result.domain.triangles,
+            "values": values, "radius": radius,
             "range": (float(np.nanmin(values)), float(np.nanmax(values))),
             "theta": theta, "i": ii, "q": qq,
             "names": list(result.forcing.names), "pattern": self._pattern,
-            "meta": {
-                "dof": int(result.domain.basis.N),
-                "kR": 2 * np.pi * self._state["forward"]["params"]["frequency"] * radius
-                / max(float(np.min(result.medium.sound_speed)), 1e-9),
-            },
-            "reports": [(r.stage, r.component, r.seconds, r.recomputed) for r in result.reports],
+            "dof": int(result.domain.basis.N),
+            "kR": 2 * np.pi * freq * radius / max(c_min, 1e-9),
+            "points_per_wavelength": wavelength / result.domain.h_max,
         }
         self._paint(self._last)
         self._paint_wave(self._last)
-        self._metric.setText(f"{self._last['meta']['kR']:.2f}")
-        self._clock.setText(f"{self._last['meta']['dof']:,} dof · {timer.elapsed()} ms")
-        self._leds.setText("   ".join(
-            f"{s} · {c} · {'%.0f ms' % (sec * 1000) if rc else 'cached'}"
-            for s, c, sec, rc in self._last["reports"]))
+        self._metric.setText(f"{self._last['kR']:.2f}")
+        self._set_resolution(self._last["points_per_wavelength"])
+        self._clock.setText(f"{self._last['dof']:,} dof · {timer.elapsed()} ms")
         self.unsetCursor()
+
+    def _set_resolution(self, ppw: float) -> None:
+        # points per shortest wavelength; below ~8 the forward solve is suspect.
+        colour = INK if ppw >= 8.0 else FILE
+        self._resolution.setText(f"{ppw:.1f} pts/λ")
+        self._resolution.setStyleSheet(f"color: {colour};")
 
     # ---- rendering ----
     def _paint(self, data: dict) -> None:
         ax, R = self._ax, data["radius"]
         ax.clear()
         ax.set_facecolor(PAPER)
-        lo, hi = data["range"]
-        if self._view == "wavefield":
-            m = max(abs(lo), abs(hi)) or 1.0
-            lo, hi = -m, m
-        masked = np.ma.masked_invalid(data["grid"])
-        ax.imshow(masked, origin="lower", extent=(-R, R, -R, R),
-                  cmap=CMAPS[self._colormap], vmin=lo, vmax=hi, interpolation="bilinear")
+        x, y, tri = data["x"], data["y"], data["triangles"]
+        if self._view == "mesh":
+            ax.triplot(x, y, tri, color=GREEN, linewidth=0.35, alpha=0.75)
+            tag = f"mesh · {data['dof']:,} nodes · {len(tri):,} triangles"
+        else:
+            lo, hi = data["range"]
+            if self._view == "wavefield":
+                m = max(abs(lo), abs(hi)) or 1.0
+                lo, hi = -m, m
+            # true P1 field on the actual triangulation — no rasterization
+            ax.tripcolor(x, y, tri, data["values"], shading="gouraud",
+                         cmap=CMAPS[self._colormap], vmin=lo, vmax=hi)
+            tag = (f"Re u(x) · {data['names'][data['pattern']]}" if self._view == "wavefield"
+                   else f"specimen c(x) · {self._colormap}")
         ax.add_patch(Circle((0, 0), R, fill=False, edgecolor=INK, linewidth=1.4, alpha=0.6))
         ax.set_xlim(-R * 1.02, R * 1.02)
         ax.set_ylim(-R * 1.02, R * 1.02)
         ax.set_aspect("equal")
         ax.axis("off")
-        tag = (f"Re u(x) · {data['names'][data['pattern']]}" if self._view == "wavefield"
-               else f"specimen c(x) · {self._colormap}")
         ax.text(0.02, 0.97, tag, transform=ax.transAxes, va="top", ha="left",
                 fontsize=9, color=INK, family="monospace")
         self._canvas.draw_idle()

@@ -25,13 +25,7 @@ def _parser() -> argparse.ArgumentParser:
     plot = commands.add_parser("plot", help="plot an already-saved result")
     plot.add_argument("output", type=Path)
     plot.add_argument("--pattern")
-    studio = commands.add_parser("studio", help="launch the local native engine studio")
-    studio.add_argument(
-        "--web", action="store_true", help="use the browser studio instead of the Qt app"
-    )
-    studio.add_argument("--port", type=int, default=8730)
-    studio.add_argument("--host", default="127.0.0.1")
-    studio.add_argument("--no-browser", action="store_true")
+    commands.add_parser("studio", help="launch the native engine studio")
     return parser
 
 
@@ -128,22 +122,12 @@ def main(argv: list[str] | None = None) -> int:
             _simulate(arguments.config, arguments.output)
             return 0
         if arguments.command == "studio":
-            if arguments.web:
-                from usct.engine.server import serve
-
-                serve(
-                    host=arguments.host,
-                    port=arguments.port,
-                    open_browser=not arguments.no_browser,
-                )
-                return 0
             try:
                 from usct.engine.desktop import launch
             except ImportError:
                 print(
-                    "The native studio needs PySide6. Install it with:\n"
-                    "  pip install -e '.[gui]'\n"
-                    "or run the browser studio with:  python -m usct studio --web",
+                    "The studio needs PySide6. Install it with:\n"
+                    "  pip install -e '.[gui]'",
                     file=sys.stderr,
                 )
                 return 2
