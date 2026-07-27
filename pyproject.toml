@@ -29,6 +29,9 @@ usct = "usct.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+"usct.engine" = ["*.html"]
+
 [tool.pytest.ini_options]
 addopts = "-ra"
 testpaths = ["tests"]

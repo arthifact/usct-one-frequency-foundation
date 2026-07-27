@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>USCT Engine — Studio</title>
+<style>
+  :root{
+    --page:#ef5a86;              /* the promo-frame pink */
+    --card:#f4ecd6;             /* warm parchment */
+    --card-2:#efe6cc;
+    --ink:#22301d;              /* deep green-black text */
+    --muted:#7c7350;            /* olive-brown labels */
+    --head:#655c3c;
+    --line:#d9cca6;             /* warm hairline */
+    --green:#1c4a34;            /* forest accent */
+    --green-2:#2c6a49;
+    --orange:#ee7a18;
+    --file:#d9481f;             /* filename orange-red */
+    --amber:#f2a72a;
+    --serif:"New York", ui-serif, Georgia, "Times New Roman", serif;
+    --mono:ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:var(--page);
+    font-family:var(--mono);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    display:flex; align-items:center; justify-content:center;
+    padding:26px;
+  }
+  .device{
+    width:100%; max-width:1180px;
+    background:var(--card);
+    border-radius:22px;
+    box-shadow:0 30px 80px -30px rgba(0,0,0,.5), inset 0 0 0 1px rgba(0,0,0,.03);
+    padding:26px 28px;
+    display:grid;
+    grid-template-columns:288px 1fr;
+    gap:30px;
+  }
+  @media (max-width:880px){ .device{ grid-template-columns:1fr; } }
+
+  /* ---------------- left panel ---------------- */
+  .panel{ display:flex; flex-direction:column; }
+  .logo{ font-family:var(--serif); font-weight:700; font-size:27px; line-height:.92;
+    letter-spacing:.01em; color:var(--ink); margin:2px 0 18px; }
+  .logo small{ display:block; font-family:var(--serif); font-weight:700; }
+
+  .sec{ padding:13px 0; border-top:1px solid var(--line); }
+  .sec:first-of-type{ border-top:none; padding-top:0; }
+  .sec-h{ font-size:11px; letter-spacing:.02em; color:var(--head); margin:0 0 10px; }
+
+  .row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:9px 0; }
+  .row .lab{ font-size:11px; color:var(--muted); }
+  .row .lab.small{ min-width:64px; }
+
+  /* pill group */
+  .pills{ display:inline-flex; border:1px solid var(--green); border-radius:8px; overflow:hidden; }
+  .pills button{ font-family:var(--mono); font-size:11px; padding:5px 10px; border:none;
+    background:transparent; color:var(--green); cursor:pointer; border-left:1px solid var(--green); }
+  .pills button:first-child{ border-left:none; }
+  .pills button.on{ background:var(--green); color:var(--card); }
+
+  /* upload-style button + filename */
+  .btn{ font-family:var(--mono); font-size:11.5px; background:var(--green); color:var(--card);
+    border:none; border-radius:8px; padding:8px 14px; cursor:pointer; letter-spacing:.02em; }
+  .btn.ghost{ background:transparent; color:var(--green); border:1px solid var(--green); }
+  .btn:hover{ background:var(--green-2); }
+  .btn.ghost:hover{ background:rgba(28,74,52,.08); }
+  .file{ color:var(--file); font-size:11px; line-height:1.3; word-break:break-word; }
+  select.mono{ font-family:var(--mono); font-size:11.5px; color:var(--ink);
+    background:var(--card-2); border:1px solid var(--line); border-radius:8px; padding:7px 9px; width:100%; }
+  select.mono:focus{ outline:2px solid var(--green); }
+
+  /* colour swatches */
+  .swatches{ display:flex; gap:9px; flex-wrap:wrap; }
+  .sw{ width:20px; height:20px; border-radius:50%; cursor:pointer; border:2px solid transparent;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.12); }
+  .sw.on{ border-color:var(--ink); }
+
+  /* sliders */
+  .slider{ display:grid; grid-template-columns:16px 1fr auto; align-items:center; gap:10px; margin:8px 0; }
+  .slider .k{ font-size:11px; color:var(--muted); font-style:italic; }
+  .slider .v{ font-size:11px; color:var(--green); min-width:52px; text-align:right; font-variant-numeric:tabular-nums; }
+  input[type=range]{ -webkit-appearance:none; appearance:none; height:2px; background:var(--line); border-radius:2px; }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:12px; height:12px; border-radius:50%;
+    background:var(--green); cursor:pointer; border:2px solid var(--card); }
+  input[type=range]::-moz-range-thumb{ width:12px; height:12px; border-radius:50%; background:var(--green);
+    cursor:pointer; border:2px solid var(--card); }
+
+  .metric{ margin-top:auto; padding-top:16px; display:flex; align-items:center; gap:11px; }
+  .metric .glyph{ width:26px; height:26px; border-radius:50%; border:1.5px solid var(--ink);
+    display:grid; place-items:center; }
+  .metric .glyph::before{ content:""; width:12px; height:12px; border-radius:50%;
+    background:radial-gradient(circle at 50% 50%, transparent 2px, var(--ink) 2px 3px, transparent 3px),
+               radial-gradient(circle at 50% 50%, transparent 5px, var(--ink) 5px 6px, transparent 6px); }
+  .metric .ml{ font-size:11px; color:var(--muted); }
+  .metric .mv{ margin-left:auto; font-size:15px; color:var(--ink); font-variant-numeric:tabular-nums; }
+
+  /* ---------------- right column ---------------- */
+  .stage{ display:flex; flex-direction:column; min-width:0; }
+  .screen{ position:relative; border-radius:14px; overflow:hidden; background:#111;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.15); aspect-ratio:16/10; }
+  #view{ width:100%; height:100%; display:block; }
+  .screen .tag{ position:absolute; top:12px; left:12px; font-size:10px; letter-spacing:.04em;
+    color:rgba(255,255,255,.85); background:rgba(0,0,0,.35); padding:4px 8px; border-radius:6px;
+    backdrop-filter:blur(3px); }
+  .screen .solving{ position:absolute; inset:0; display:none; place-items:center;
+    background:rgba(20,15,5,.35); color:var(--card); font-size:12px; letter-spacing:.08em; }
+  .screen.busy .solving{ display:grid; }
+
+  .transport{ display:flex; align-items:center; gap:12px; padding:11px 2px; }
+  .play{ width:30px; height:30px; border-radius:50%; border:1.5px solid var(--ink); background:transparent;
+    color:var(--ink); cursor:pointer; display:grid; place-items:center; }
+  .play svg{ width:12px; height:12px; }
+  .toggle{ display:inline-flex; border:1px solid var(--green); border-radius:8px; overflow:hidden; }
+  .toggle button{ font-family:var(--mono); font-size:10.5px; padding:5px 11px; border:none;
+    background:transparent; color:var(--green); cursor:pointer; }
+  .toggle button.on{ background:var(--green); color:var(--card); }
+  .track{ flex:1; height:6px; border-radius:4px; background:var(--card-2); position:relative;
+    box-shadow:inset 0 0 0 1px var(--line); overflow:hidden; }
+  .track > span{ position:absolute; inset:0 auto 0 0; width:0%; background:var(--amber); }
+  .clock{ font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; min-width:70px; text-align:right; }
+
+  .divider{ height:1px; background:var(--line); margin:6px 0 12px; }
+  .resp-h{ display:flex; align-items:baseline; gap:10px; margin-bottom:8px; }
+  .resp-h .t{ font-size:11px; color:var(--head); }
+  .resp-h .p{ font-size:11px; color:var(--file); }
+  .resp-h .legend{ margin-left:auto; font-size:10px; color:var(--muted); }
+  .resp-h .legend i{ display:inline-block; width:12px; height:2px; vertical-align:middle; margin:0 4px 0 10px; }
+  #wave{ width:100%; height:118px; display:block; }
+
+  .stage-leds{ display:flex; gap:14px; margin-top:12px; flex-wrap:wrap; }
+  .led{ display:flex; align-items:center; gap:6px; font-size:10px; color:var(--muted); }
+  .led .d{ width:7px; height:7px; border-radius:50%; background:var(--line); }
+  .led.hot .d{ background:var(--orange); box-shadow:0 0 6px var(--orange); }
+  .led.warm .d{ background:var(--green); }
+  .err{ color:var(--file); font-size:11px; margin-top:10px; min-height:14px; }
+</style>
+</head>
+<body>
+<div class="device">
+  <!-- ============ LEFT PANEL ============ -->
+  <section class="panel">
+    <div class="logo">USCT<small>ENGINE</small></div>
+
+    <div class="sec">
+      <p class="sec-h">Engine Settings</p>
+      <div class="row">
+        <span class="lab small">Mesh</span>
+        <span class="pills" id="mesh-pills"></span>
+      </div>
+      <div class="row">
+        <span class="lab small">Medium</span>
+        <span class="pills" id="medium-pills"></span>
+      </div>
+    </div>
+
+    <div class="sec">
+      <p class="sec-h">Phantom</p>
+      <select class="mono" id="preset"></select>
+      <div class="file" id="preset-file" style="margin-top:8px">professor_breast</div>
+    </div>
+
+    <div class="sec">
+      <p class="sec-h">Colour Scheme</p>
+      <div class="swatches" id="swatches"></div>
+    </div>
+
+    <div class="sec">
+      <p class="sec-h">Physics Parameters</p>
+      <div id="phys"></div>
+    </div>
+
+    <div class="sec">
+      <p class="sec-h">Forcing</p>
+      <div class="slider">
+        <span class="k">m</span>
+        <input type="range" id="pattern" min="0" max="4" step="1" value="0">
+        <span class="v" id="pattern-v">constant</span>
+      </div>
+    </div>
+
+    <div class="metric">
+      <span class="glyph"></span>
+      <span class="ml">kR (unit disk)</span>
+      <span class="mv" id="metric-kr">—</span>
+    </div>
+  </section>
+
+  <!-- ============ RIGHT COLUMN ============ -->
+  <section class="stage">
+    <div class="screen" id="screen">
+      <canvas id="view" width="880" height="550"></canvas>
+      <div class="tag" id="view-tag">specimen c(x)</div>
+      <div class="solving">solving…</div>
+    </div>
+
+    <div class="transport">
+      <button class="play" id="run" title="Run solve">
+        <svg viewBox="0 0 12 12"><path d="M2 1 L11 6 L2 11 Z" fill="currentColor"/></svg>
+      </button>
+      <span class="toggle" id="view-toggle">
+        <button data-v="specimen" class="on">Specimen c(x)</button>
+        <button data-v="wavefield">Wavefield</button>
+      </span>
+      <span class="track"><span id="track-fill"></span></span>
+      <span class="clock" id="clock">— ms</span>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="resp-h">
+      <span class="t">Boundary response</span>
+      <span class="p" id="resp-pattern">D = I + iQ</span>
+      <span class="legend"><i style="background:var(--green)"></i>I<i style="background:var(--orange)"></i>Q</span>
+    </div>
+    <canvas id="wave" width="1600" height="236"></canvas>
+
+    <div class="stage-leds" id="leds"></div>
+    <div class="err" id="err"></div>
+  </section>
+</div>
+
+<script>
+"use strict";
+const $ = (s)=>document.querySelector(s);
+const STAGES = ["mesh","medium","forcing","forward","measurement"];
+let SCHEMA = null;
+const state = {};        // stage -> {component, params}
+let view = "specimen";
+let colormap = "amber";
+let solving = false, dirty = false;
+
+// ---------- colormaps ----------
+const MAPS = {
+  amber:  [[247,240,220],[244,196,90],[240,150,40],[196,86,26],[120,42,16]],
+  inferno:[[0,0,4],[87,16,110],[188,55,84],[249,142,9],[252,255,164]],
+  viridis:[[68,1,84],[59,82,139],[33,145,140],[94,201,98],[253,231,37]],
+  ice:    [[8,17,34],[28,72,120],[64,145,190],[150,205,220],[240,249,252]],
+  moss:   [[24,38,26],[36,74,52],[74,120,72],[150,180,110],[233,231,200]],
+  sand:   [[38,30,18],[110,84,44],[176,140,86],[220,196,150],[245,236,214]],
+};
+const SWATCH = ["amber","inferno","viridis","ice","moss","sand"];
+function cmap(name,t){
+  const s=MAPS[name]; t=Math.max(0,Math.min(1,t));
+  const x=t*(s.length-1), i=Math.floor(x), f=x-i, a=s[i], b=s[Math.min(i+1,s.length-1)];
+  return [a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f, a[2]+(b[2]-a[2])*f];
+}
+
+// ---------- boot ----------
+async function boot(){
+  SCHEMA = await (await fetch("/schema")).json();
+  STAGES.forEach(s=>{
+    const c = pickDefault(s);
+    state[s] = { component:c.name, params:defaults(c) };
+  });
+  buildControls();
+  await run();
+}
+function comp(stage,name){ return SCHEMA[stage].find(c=>c.name===name); }
+function pickDefault(stage){
+  if(stage==="medium") return comp("medium","feature_phantom");
+  return SCHEMA[stage][0];
+}
+function defaults(c){ const o={}; c.params.forEach(p=>o[p.name]=clone(p.default)); return o; }
+const clone=(x)=>JSON.parse(JSON.stringify(x));
+
+// ---------- build the control panel from the schema ----------
+function buildControls(){
+  // mesh refinement pills (3..6) + medium impl pills
+  const meshP = comp("mesh","uniform_disk").params.find(p=>p.name==="refinements");
+  pills("#mesh-pills", [3,4,5,6], state.mesh.params.refinements, (v)=>{ state.mesh.params.refinements=v; buildControls(); run(); });
+
+  pills("#medium-pills", SCHEMA.medium.map(c=>c.name), state.medium.component,
+    (name)=>{ state.medium={component:name, params:defaults(comp("medium",name))}; buildControls(); run(); },
+    (name)=>({constant:"const",circular_inclusion:"disk",feature_phantom:"phantom"}[name]||name));
+
+  // phantom preset select (only meaningful for feature_phantom)
+  const presetSel = $("#preset");
+  presetSel.innerHTML="";
+  const medC = comp("medium", state.medium.component);
+  const presetParam = medC.params.find(p=>p.name==="preset");
+  if(presetParam){
+    presetParam.choices.forEach(ch=>{ const o=document.createElement("option"); o.value=ch;o.textContent=ch;
+      if(ch===state.medium.params.preset)o.selected=true; presetSel.appendChild(o); });
+    presetSel.disabled=false;
+    presetSel.onchange=()=>{ state.medium.params.preset=presetSel.value; $("#preset-file").textContent=presetSel.value; buildControls(); run(); };
+    $("#preset-file").textContent = state.medium.params.preset;
+  } else {
+    const o=document.createElement("option"); o.textContent="— n/a for "+state.medium.component; presetSel.appendChild(o);
+    presetSel.disabled=true; $("#preset-file").textContent=state.medium.component;
+  }
+
+  // swatches
+  const sw=$("#swatches"); sw.innerHTML="";
+  SWATCH.forEach(name=>{
+    const c=document.createElement("span"); c.className="sw"+(name===colormap?" on":"");
+    const g=MAPS[name]; const mid=g[Math.floor(g.length/2)];
+    c.style.background=`linear-gradient(135deg, rgb(${g[1]}) , rgb(${mid}), rgb(${g[g.length-1]}))`;
+    c.title=name; c.onclick=()=>{ colormap=name; buildControls(); paint(last); };
+    sw.appendChild(c);
+  });
+
+  // physics sliders: frequency+loss (forward), + medium bg/sharpness when custom
+  const phys=$("#phys"); phys.innerHTML="";
+  slider(phys,"f", "frequency", state.forward.params.frequency, 0.05, 4, 0.001, (v)=>{ state.forward.params.frequency=v; refreshKR(); run(); }, 3);
+  slider(phys,"eta","loss", state.forward.params.loss, 0, 0.05, 0.001, (v)=>{ state.forward.params.loss=v; run(); }, 3);
+  if(state.medium.component==="feature_phantom" && state.medium.params.preset==="custom"){
+    slider(phys,"s","sharpness", state.medium.params.sharpness, 1, 200, 1, (v)=>{ state.medium.params.sharpness=v; run(); }, 0);
+    slider(phys,"c","bg speed", state.medium.params.background_speed, 0.5, 2, 0.01, (v)=>{ state.medium.params.background_speed=v; run(); }, 2);
+  }
+  if(state.medium.component==="circular_inclusion"){
+    slider(phys,"r","incl. radius", state.medium.params.radius, 0.02, 0.9, 0.005, (v)=>{ state.medium.params.radius=v; run(); }, 3);
+    slider(phys,"c","incl. speed", state.medium.params.inclusion_speed, 0.5, 2.5, 0.01, (v)=>{ state.medium.params.inclusion_speed=v; run(); }, 2);
+  }
+  if(state.medium.component==="constant"){
+    slider(phys,"c","speed", state.medium.params.background_speed, 0.5, 2.5, 0.01, (v)=>{ state.medium.params.background_speed=v; run(); }, 2);
+  }
+
+  // forcing pattern selector
+  const pats = state.forcing.params.patterns;
+  const pr=$("#pattern"); pr.max=pats.length-1; pr.value=Math.min(pr.value, pats.length-1);
+  $("#pattern-v").textContent = pats[pr.value];
+  pr.oninput=()=>{ $("#pattern-v").textContent=pats[pr.value]; run(); };
+
+  refreshKR();
+}
+
+function pills(sel, values, current, on, labelFn){
+  const host=$(sel); host.innerHTML="";
+  values.forEach(v=>{
+    const b=document.createElement("button"); b.textContent=labelFn?labelFn(v):v;
+    if(String(v)===String(current)) b.className="on";
+    b.onclick=()=>on(v); host.appendChild(b);
+  });
+}
+function slider(host,key,label,value,min,max,step,on,digits){
+  const w=document.createElement("div"); w.className="slider";
+  w.innerHTML=`<span class="k" title="${label}">${key}</span>`;
+  const r=document.createElement("input"); r.type="range"; r.min=min; r.max=max; r.step=step; r.value=value;
+  const v=document.createElement("span"); v.className="v"; v.textContent=fmt(value,digits);
+  r.oninput=()=>{ v.textContent=fmt(+r.value,digits); on(+r.value); };
+  w.appendChild(r); w.appendChild(v); host.appendChild(w);
+}
+function fmt(x,d){ return Number(x).toFixed(d); }
+function refreshKR(){
+  const f=state.forward.params.frequency, R=state.mesh.params.radius||1, c=bgSpeed();
+  $("#metric-kr").textContent=(2*Math.PI*f*R/c).toFixed(2);
+}
+function bgSpeed(){
+  const p=state.medium.params;
+  if(state.medium.component==="feature_phantom") return p.preset==="custom"?p.background_speed:1.0;
+  if(state.medium.component==="circular_inclusion") return Math.min(p.background_speed,p.inclusion_speed);
+  return p.background_speed;
+}
+
+// ---------- run the real engine ----------
+let last=null, timer=null;
+function run(){ // debounced
+  dirty=true;
+  clearTimeout(timer);
+  timer=setTimeout(execute, 130);
+}
+async function execute(){
+  if(solving){ return; }              // a fresh run() will re-fire via dirty
+  solving=true; dirty=false;
+  $("#screen").classList.add("busy");
+  $("#err").textContent="";
+  const t0=performance.now();
+  try{
+    const res=await fetch("/run",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({stages:state, view, pattern:+$("#pattern").value, grid:150})});
+    const data=await res.json();
+    if(data.error){ $("#err").textContent="engine: "+data.error; }
+    else { last=data; paint(data); paintWave(data); updateMeta(data, performance.now()-t0); }
+  }catch(e){ $("#err").textContent="cannot reach local engine ("+e+")"; }
+  finally{
+    solving=false; $("#screen").classList.remove("busy");
+    if(dirty) execute();               // coalesce rapid slider moves
+  }
+}
+
+// ---------- paint the field ----------
+const vcx=$("#view").getContext("2d");
+function paint(data){
+  if(!data) return;
+  const g=data.grid, n=g.length, cv=$("#view"), W=cv.width, H=cv.height;
+  const off=document.createElement("canvas"); off.width=n; off.height=n;
+  const octx=off.getContext("2d"), img=octx.createImageData(n,n), d=img.data;
+  let lo=data.grid_range[0], hi=data.grid_range[1];
+  if(data.view==="wavefield"){ const m=Math.max(Math.abs(lo),Math.abs(hi))||1; lo=-m; hi=m; }
+  const span=(hi-lo)||1;
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+    const v=g[y][x], k=(y*n+x)*4;
+    if(v===null){ d[k+3]=0; continue; }
+    const col=cmap(colormap,(v-lo)/span);
+    d[k]=col[0]; d[k+1]=col[1]; d[k+2]=col[2]; d[k+3]=255;
+  }
+  octx.putImageData(img,0,0);
+  // paper background inside the screen, then the disk
+  vcx.clearRect(0,0,W,H);
+  vcx.fillStyle="#0e0d0b"; vcx.fillRect(0,0,W,H);
+  vcx.imageSmoothingEnabled=true;
+  const R=Math.min(W,H)*0.46, cx=W/2, cy=H/2;
+  vcx.save(); vcx.beginPath(); vcx.arc(cx,cy,R,0,7); vcx.clip();
+  vcx.drawImage(off, cx-R, cy-R, 2*R, 2*R); vcx.restore();
+  // transducer ring
+  vcx.strokeStyle="rgba(244,236,214,.85)"; vcx.lineWidth=2;
+  vcx.beginPath(); vcx.arc(cx,cy,R,0,7); vcx.stroke();
+  $("#view-tag").textContent = data.view==="wavefield"
+    ? `Re u(x) · pattern ${data.pattern_names[data.pattern]}`
+    : `specimen c(x) · ${colormap}`;
+}
+
+// ---------- paint the boundary response waveform ----------
+const wcx=$("#wave").getContext("2d");
+function paintWave(data){
+  const cv=$("#wave"); const W=cv.width=cv.clientWidth*2, H=cv.height=236;
+  wcx.clearRect(0,0,W,H);
+  const I=data.response.i, Q=data.response.q, N=I.length;
+  const mid=H*0.5, maxA=Math.max(1e-9,...I.map(Math.abs),...Q.map(Math.abs));
+  // baseline + ticks
+  wcx.strokeStyle="#d9cca6"; wcx.lineWidth=1;
+  wcx.beginPath(); wcx.moveTo(0,mid); wcx.lineTo(W,mid); wcx.stroke();
+  wcx.fillStyle="#a89a6e"; wcx.font="18px "+getComputedStyle(document.body).fontFamily;
+  for(let t=0;t<=8;t++){ const x=t/8*W; wcx.globalAlpha=.5; wcx.beginPath(); wcx.moveTo(x,mid-6); wcx.lineTo(x,mid+6); wcx.stroke();
+    wcx.globalAlpha=1; const deg=Math.round(-180+t/8*360); wcx.fillText(deg+"°", x+4, H-6); }
+  // Q as faint orange line
+  line(Q, W, N, mid, maxA*0.9, "#ee7a18", 2, .8);
+  // I as green bars (the "waveform")
+  const bw=Math.max(1, W/N*0.62);
+  wcx.fillStyle="#1d5c42";
+  for(let i=0;i<N;i++){ const x=i/(N-1)*W; const h=(I[i]/maxA)*mid*0.86;
+    wcx.fillRect(x-bw/2, mid, bw, -h); }
+}
+function line(arr,W,N,mid,scale,color,lw,alpha){
+  wcx.globalAlpha=alpha; wcx.strokeStyle=color; wcx.lineWidth=lw; wcx.beginPath();
+  for(let i=0;i<N;i++){ const x=i/(N-1)*W, y=mid-(arr[i]/scale)*mid*0.86; i?wcx.lineTo(x,y):wcx.moveTo(x,y); }
+  wcx.stroke(); wcx.globalAlpha=1;
+}
+
+// ---------- meta / leds ----------
+function updateMeta(data,ms){
+  $("#resp-pattern").textContent = "D = I + iQ · "+data.pattern_names[data.pattern];
+  $("#metric-kr").textContent = data.meta.kR.toFixed(2);
+  $("#clock").textContent = `${data.meta.dof.toLocaleString()} dof · ${ms.toFixed(0)} ms`;
+  const fill=Math.max(6, Math.min(100, 100*data.meta.frequency/4));
+  $("#track-fill").style.width=fill+"%";
+  const leds=$("#leds"); leds.innerHTML="";
+  data.reports.forEach(r=>{
+    const el=document.createElement("span");
+    el.className="led "+(r.recomputed?"hot":"warm");
+    el.innerHTML=`<span class="d"></span>${r.stage} · ${r.component} · ${r.recomputed?r.ms+" ms":"cached"}`;
+    leds.appendChild(el);
+  });
+}
+
+// ---------- transport ----------
+$("#run").onclick=()=>run();
+$("#view-toggle").onclick=(e)=>{ const b=e.target.closest("button"); if(!b)return;
+  view=b.dataset.v; document.querySelectorAll("#view-toggle button").forEach(x=>x.classList.toggle("on",x===b));
+  run(); };
+window.addEventListener("resize", ()=>{ if(last) paintWave(last); });
+
+boot();
+</script>
+</body>
+</html>
