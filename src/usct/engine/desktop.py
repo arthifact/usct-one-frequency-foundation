@@ -491,6 +491,7 @@ class Studio(QtWidgets.QMainWindow):
         wavelength = c_min / max(freq, 1e-9)
         self._last = {
             "x": coords[:, 0], "y": coords[:, 1], "triangles": result.domain.triangles,
+            "boundary": result.domain.boundary_dofs,
             "values": values, "radius": radius,
             "range": (float(np.nanmin(values)), float(np.nanmax(values))),
             "theta": theta, "i": ii, "q": qq,
@@ -519,8 +520,17 @@ class Studio(QtWidgets.QMainWindow):
         ax.set_facecolor(PAPER)
         x, y, tri = data["x"], data["y"], data["triangles"]
         if self._view == "mesh":
-            ax.triplot(x, y, tri, color=GREEN, linewidth=0.35, alpha=0.75)
-            tag = f"mesh · {data['dof']:,} nodes · {len(tri):,} triangles"
+            ax.triplot(x, y, tri, color=GREEN, linewidth=0.35, alpha=0.6)
+            # the nodes are the triangle corners; dots shrink as the mesh grows
+            boundary = data["boundary"]
+            interior = np.setdiff1d(np.arange(len(x)), boundary, assume_unique=False)
+            dot = float(np.clip(1600.0 / max(len(x), 1), 0.6, 9.0))
+            ax.plot(x[interior], y[interior], "o", markersize=dot, markerfacecolor=GREEN,
+                    markeredgecolor="none", alpha=0.9, linestyle="none")
+            ax.plot(x[boundary], y[boundary], "o", markersize=dot * 1.9, markerfacecolor=ORANGE,
+                    markeredgecolor="none", linestyle="none")
+            tag = (f"mesh · {data['dof']:,} nodes ({len(boundary):,} on boundary) · "
+                   f"{len(tri):,} triangles")
         else:
             lo, hi = data["range"]
             if self._view == "wavefield":
