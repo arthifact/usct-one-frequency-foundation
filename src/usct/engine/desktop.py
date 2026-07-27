@@ -59,10 +59,29 @@ def _make_cmap(name: str, stops: list[list[int]]) -> LinearSegmentedColormap:
 
 CMAPS = {name: _make_cmap(name, stops) for name, stops in _CMAP_STOPS.items()}
 
-_QSS = f"""
+def _resolve_family(preferences: list[str], fixed: bool) -> str:
+    """Return the first installed family from ``preferences`` (never a missing one).
+
+    Naming a font Qt cannot find forces an expensive family-alias scan and a
+    console warning on every launch, so we only ever hand Qt families that
+    ``QFontDatabase`` reports as present, falling back to the platform's own
+    fixed/serif system font.
+    """
+
+    available = set(QtGui.QFontDatabase.families())
+    for name in preferences:
+        if name in available:
+            return name
+    system = QtGui.QFontDatabase.SystemFont
+    role = system.FixedFont if fixed else system.GeneralFont
+    return QtGui.QFontDatabase.systemFont(role).family()
+
+
+def _build_qss(mono: str, serif: str) -> str:
+    return f"""
 QWidget {{ background: {PAPER}; color: {INK};
-  font-family: "SF Mono", "Menlo", "Consolas", monospace; font-size: 12px; }}
-QLabel#logo {{ font-family: "New York", "Georgia", serif; font-weight: 700; font-size: 26px; }}
+  font-family: "{mono}"; font-size: 12px; }}
+QLabel#logo {{ font-family: "{serif}"; font-weight: 700; font-size: 26px; }}
 QLabel#section {{ color: #655c3c; font-size: 11px; }}
 QLabel#metricval {{ font-size: 16px; }}
 QFrame#panel {{ border-right: 1px solid #d9cca6; }}
@@ -83,6 +102,10 @@ QSlider::handle:horizontal {{ background: {GREEN}; width: 12px; height: 12px; ma
 QMenuBar, QMenu {{ background: {PAPER2}; }}
 QMenu::item:selected {{ background: {GREEN}; color: {PAPER}; }}
 """
+
+
+_MONO_PREFS = ["SF Mono", "JetBrains Mono", "Menlo", "DejaVu Sans Mono", "Consolas", "Courier New"]
+_SERIF_PREFS = ["New York", "Charter", "Georgia", "Palatino", "Times New Roman"]
 
 
 class FloatSlider(QtWidgets.QWidget):
@@ -129,7 +152,8 @@ class Studio(QtWidgets.QMainWindow):
         super().__init__()
         self.setWindowTitle("USCT Engine — Studio")
         self.resize(1180, 760)
-        self.setStyleSheet(_QSS)
+        self._mono = _resolve_family(_MONO_PREFS, fixed=True)
+        self.setStyleSheet(_build_qss(self._mono, _resolve_family(_SERIF_PREFS, fixed=False)))
 
         self._runner = PipelineRunner()
         self._state: dict[str, dict[str, Any]] = {}
