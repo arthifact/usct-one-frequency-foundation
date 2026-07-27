@@ -1,0 +1,701 @@
+<title>USCT Engine - Signal Instrument</title>
+<style>
+  :root {
+    /* dark is the instrument's native world; light is the datasheet */
+    --ink: #0a0e12;
+    --panel: #0f151b;
+    --panel-2: #131b23;
+    --edge: #1f2b35;
+    --edge-2: #2a3a47;
+    --text: #c9d3da;
+    --muted: #79858f;
+    --faint: #4a5860;
+    --accent: #39e0cf;         /* phosphor teal - chrome only, used sparingly */
+    --accent-dim: #1b6b64;
+    --amber: #f0a63c;          /* recomputing / stale */
+    --amber-dim: #6b4a1c;
+    --grid: rgba(120,150,165,0.09);
+    --shadow: 0 1px 0 rgba(255,255,255,0.03), 0 12px 40px -12px rgba(0,0,0,0.7);
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Menlo", "Consolas", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --radius: 10px;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --ink: #eef1f3; --panel: #ffffff; --panel-2: #f6f8f9;
+      --edge: #dde3e7; --edge-2: #cbd4da;
+      --text: #17222b; --muted: #5c6b76; --faint: #97a4ad;
+      --accent: #0e8f84; --accent-dim: #9fd8d2;
+      --amber: #b46a12; --amber-dim: #e6cfa5;
+      --grid: rgba(30,60,75,0.07);
+      --shadow: 0 1px 0 rgba(255,255,255,0.6), 0 12px 34px -16px rgba(30,50,60,0.35);
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --ink: #eef1f3; --panel: #ffffff; --panel-2: #f6f8f9;
+    --edge: #dde3e7; --edge-2: #cbd4da;
+    --text: #17222b; --muted: #5c6b76; --faint: #97a4ad;
+    --accent: #0e8f84; --accent-dim: #9fd8d2;
+    --amber: #b46a12; --amber-dim: #e6cfa5;
+    --grid: rgba(30,60,75,0.07);
+    --shadow: 0 1px 0 rgba(255,255,255,0.6), 0 12px 34px -16px rgba(30,50,60,0.35);
+    color-scheme: light;
+  }
+  :root[data-theme="dark"] {
+    --ink: #0a0e12; --panel: #0f151b; --panel-2: #131b23;
+    --edge: #1f2b35; --edge-2: #2a3a47;
+    --text: #c9d3da; --muted: #79858f; --faint: #4a5860;
+    --accent: #39e0cf; --accent-dim: #1b6b64;
+    --amber: #f0a63c; --amber-dim: #6b4a1c;
+    --grid: rgba(120,150,165,0.09);
+    --shadow: 0 1px 0 rgba(255,255,255,0.03), 0 12px 40px -12px rgba(0,0,0,0.7);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background:
+      radial-gradient(1200px 600px at 78% -10%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 60%),
+      var(--ink);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 1fr;
+    min-height: 100vh;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 18px;
+    gap: 14px;
+  }
+
+  /* ---------- header ---------- */
+  header {
+    display: flex; align-items: center; gap: 20px;
+    border: 1px solid var(--edge);
+    background: linear-gradient(var(--panel), var(--panel-2));
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    box-shadow: var(--shadow);
+  }
+  .brand { display: flex; flex-direction: column; gap: 1px; }
+  .brand h1 {
+    margin: 0; font-size: 15px; font-weight: 650; letter-spacing: 0.02em;
+    text-wrap: balance;
+  }
+  .brand .sub {
+    font-family: var(--mono); font-size: 10.5px; color: var(--muted);
+    letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .readouts { margin-left: auto; display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
+  .ro { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+  .ro .k { font-family: var(--mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--faint); }
+  .ro .v { font-family: var(--mono); font-size: 14px; font-variant-numeric: tabular-nums; color: var(--text); }
+  .ro .v em { color: var(--accent); font-style: normal; }
+  .theme-btn {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    background: var(--panel-2); color: var(--muted); border: 1px solid var(--edge);
+    border-radius: 6px; padding: 7px 10px; cursor: pointer;
+  }
+  .theme-btn:hover { color: var(--text); border-color: var(--edge-2); }
+
+  /* ---------- main ---------- */
+  main {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 14px;
+    min-height: 0;
+  }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+
+  .rail {
+    display: flex; flex-direction: column; gap: 10px;
+    min-width: 0;
+  }
+  .rail-head {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--faint); padding: 0 2px 2px;
+    display:flex; justify-content: space-between; align-items:center;
+  }
+
+  /* stage module */
+  .stage {
+    position: relative;
+    border: 1px solid var(--edge);
+    background: linear-gradient(var(--panel), var(--panel-2));
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    transition: border-color .18s ease;
+  }
+  .stage.sel { border-color: var(--accent-dim); }
+  .stage::before {
+    /* the wire connecting stages */
+    content: ""; position: absolute; left: 20px; top: -10px; height: 10px; width: 2px;
+    background: linear-gradient(var(--edge-2), transparent);
+  }
+  .stage:first-of-type::before { display: none; }
+  .stage-top {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; cursor: pointer; user-select: none;
+  }
+  .idx {
+    font-family: var(--mono); font-size: 10px; color: var(--faint);
+    border: 1px solid var(--edge); border-radius: 5px; padding: 2px 5px;
+    font-variant-numeric: tabular-nums;
+  }
+  .stage-name {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text);
+  }
+  .status {
+    margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 3px 7px; border-radius: 20px; border: 1px solid var(--edge);
+    color: var(--muted); white-space: nowrap;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); }
+  .status.live { color: var(--accent); border-color: var(--accent-dim); }
+  .status.live .dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .status.backend { color: var(--muted); }
+  .status.backend .dot { background: var(--faint); }
+  .status.stale { color: var(--amber); border-color: var(--amber-dim); }
+  .status.stale .dot { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+  .status.recalc .dot { animation: pulse .7s ease infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+  .stage-body {
+    padding: 4px 12px 14px;
+    border-top: 1px solid var(--edge);
+    display: none;
+  }
+  .stage.open .stage-body { display: block; }
+  .impl-row { display: flex; align-items: center; gap: 8px; margin: 10px 0 6px; }
+  .impl-row label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
+  select, input[type="text"], input[type="number"] {
+    font-family: var(--mono); font-size: 12px; color: var(--text);
+    background: var(--ink); border: 1px solid var(--edge); border-radius: 6px;
+    padding: 6px 8px; width: 100%;
+  }
+  select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: var(--accent); }
+  .impl-row select { flex: 1; }
+  .summary { font-size: 11.5px; color: var(--muted); margin: 2px 0 8px; line-height: 1.45; }
+
+  .param { margin: 9px 0; }
+  .param > .lab {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px;
+  }
+  .param .lab .name { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); }
+  .param .lab .val { font-family: var(--mono); font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .param .lab .unit { color: var(--faint); }
+  input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 3px; background: var(--edge-2); border-radius: 3px; margin: 6px 0; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%; background: var(--accent); border: 2px solid var(--ink); cursor: pointer; }
+  input[type="range"]::-moz-range-thumb { width: 13px; height: 13px; border-radius: 50%; background: var(--accent); border: 2px solid var(--ink); cursor: pointer; }
+  .vec2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .help { font-size: 10.5px; color: var(--faint); margin-top: 3px; line-height: 1.4; }
+
+  /* pattern chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-family: var(--mono); font-size: 10.5px; padding: 4px 8px; border-radius: 20px;
+    border: 1px solid var(--edge-2); color: var(--text); background: var(--ink);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .chip button { background: none; border: none; color: var(--faint); cursor: pointer; padding: 0; font-size: 12px; line-height: 1; }
+  .chip button:hover { color: var(--amber); }
+  .chip-add { display: flex; gap: 6px; margin-top: 8px; }
+  .chip-add select { width: auto; flex: 1; }
+  .mini-btn {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+    background: var(--panel-2); color: var(--muted); border: 1px solid var(--edge);
+    border-radius: 6px; padding: 6px 9px; cursor: pointer; white-space: nowrap;
+  }
+  .mini-btn:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+  /* feature editor */
+  .feat { border: 1px solid var(--edge); border-radius: 8px; padding: 8px 9px; margin: 7px 0; background: var(--ink); }
+  .feat.readonly { opacity: 0.9; }
+  .feat-top { display: flex; align-items: center; gap: 8px; }
+  .feat-type { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent-dim); border-radius: 4px; padding: 1px 5px; }
+  .feat-name { font-family: var(--mono); font-size: 11px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .feat-del { margin-left: auto; }
+
+  /* ---------- viewport ---------- */
+  .stage-view {
+    display: grid; grid-template-rows: auto 1fr; gap: 0; min-width: 0;
+    border: 1px solid var(--edge); border-radius: var(--radius);
+    background: linear-gradient(var(--panel), var(--panel-2));
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .view-bar {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    border-bottom: 1px solid var(--edge);
+  }
+  .view-title { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .view-title b { color: var(--text); font-weight: 600; }
+  .seg { margin-left: auto; display: inline-flex; border: 1px solid var(--edge); border-radius: 7px; overflow: hidden; }
+  .seg button {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    background: var(--panel-2); color: var(--muted); border: none; padding: 6px 11px; cursor: pointer;
+  }
+  .seg button.on { background: color-mix(in srgb, var(--accent) 16%, var(--panel-2)); color: var(--accent); }
+  .stagecanvas-wrap {
+    position: relative; display: grid; place-items: center; padding: 18px; min-height: 380px;
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 100% 34px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 34px 100%;
+  }
+  #specimen { border-radius: 50%; box-shadow: 0 0 0 1px var(--edge-2), 0 0 60px -10px color-mix(in srgb, var(--accent) 30%, transparent); max-width: 100%; height: auto; }
+  .badge {
+    position: absolute; top: 14px; left: 14px;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em;
+    padding: 5px 9px; border-radius: 6px; border: 1px solid var(--edge-2);
+    background: color-mix(in srgb, var(--ink) 70%, transparent); color: var(--muted);
+    backdrop-filter: blur(4px);
+  }
+  .badge.warn { color: var(--amber); border-color: var(--amber-dim); }
+  .legend {
+    position: absolute; bottom: 14px; right: 14px; display: flex; flex-direction: column; gap: 4px;
+    font-family: var(--mono); font-size: 9.5px; color: var(--muted);
+  }
+  .legend .bar { width: 120px; height: 8px; border-radius: 3px; border: 1px solid var(--edge-2); }
+  .legend .ticks { display: flex; justify-content: space-between; }
+
+  /* ---------- footer scope ---------- */
+  footer {
+    border: 1px solid var(--edge); border-radius: var(--radius);
+    background: linear-gradient(var(--panel), var(--panel-2)); box-shadow: var(--shadow);
+    padding: 12px 14px; display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center;
+  }
+  @media (max-width: 720px){ footer { grid-template-columns: 1fr; } }
+  .scope-meta { display: flex; flex-direction: column; gap: 6px; min-width: 150px; }
+  .scope-meta .t { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .scope-meta .t b { color: var(--text); }
+  .scope-legend { display: flex; gap: 14px; font-family: var(--mono); font-size: 10px; color: var(--muted); }
+  .scope-legend i { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 5px; }
+  #scope { width: 100%; height: 120px; display: block; border-radius: 8px; background: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--edge); }
+  .note { font-family: var(--mono); font-size: 10px; color: var(--faint); line-height: 1.5; }
+
+  a.src { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent-dim); }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="app">
+  <header>
+    <div class="brand">
+      <h1>USCT&nbsp;Engine</h1>
+      <span class="sub">One-Frequency Forward - Signal Instrument</span>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">Medium</span><span class="v" id="ro-medium">-</span></div>
+      <div class="ro"><span class="k">Frequency</span><span class="v" id="ro-freq">-</span></div>
+      <div class="ro"><span class="k">kR</span><span class="v" id="ro-kr">-</span></div>
+      <div class="ro"><span class="k">DOF (est.)</span><span class="v" id="ro-dof">-</span></div>
+      <button class="theme-btn" id="theme">Theme</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="rail">
+      <div class="rail-head"><span>Pipeline</span><span id="rail-sub">data flows top -> bottom</span></div>
+      <div id="stages"></div>
+    </section>
+
+    <section class="stage-view">
+      <div class="view-bar">
+        <span class="view-title">Viewport - <b id="vp-title">Specimen c(x)</b></span>
+        <div class="seg" id="vp-seg">
+          <button data-mode="specimen" class="on">Specimen c(x)</button>
+          <button data-mode="wavefield">Wavefield</button>
+        </div>
+      </div>
+      <div class="stagecanvas-wrap">
+        <canvas id="specimen" width="440" height="440"></canvas>
+        <div class="badge" id="vp-badge">live - exact port of feature_speed</div>
+        <div class="legend" id="legend">
+          <div class="bar" id="legend-bar"></div>
+          <div class="ticks"><span id="lg-lo">0.90</span><span>c</span><span id="lg-hi">2.10</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="scope-meta">
+      <span class="t">Response - <b>D = I + iQ</b></span>
+      <div class="scope-legend">
+        <span><i style="background:var(--accent)"></i>I</span>
+        <span><i style="background:var(--amber)"></i>Q</span>
+      </div>
+      <span class="note">Schematic boundary trace. The true outward flux is solved by the Python <b>fem_p1_helmholtz</b> + <b>weak_neumann</b> stages.</span>
+    </div>
+    <canvas id="scope" width="1000" height="120"></canvas>
+  </footer>
+</div>
+
+<script>
+"use strict";
+const REGISTRY = {"mesh":[{"stage":"mesh","name":"uniform_disk","summary":"Uniformly refined circular P1 triangle mesh, independent of the medium.","params":[{"name":"radius","label":"Radius","kind":"float","default":1.0,"minimum":0.001,"maximum":10.0,"step":0.01,"unit":"length","help":"Disk radius in configured units."},{"name":"refinements","label":"Refinements","kind":"int","default":5,"minimum":0,"maximum":8,"step":1,"help":"Uniform refinement passes; each roughly quadruples the triangle count. Refinement is deliberately truth-independent: it never tracks the medium, so the mesh cannot leak the answer into a future inverse problem."}]}],"medium":[{"stage":"medium","name":"circular_inclusion","summary":"Two-speed disk with one circular demonstration inclusion.","params":[{"name":"background_speed","label":"Background speed","kind":"float","default":1.0,"minimum":1e-06,"unit":"speed"},{"name":"center","label":"Inclusion center","kind":"vec2","default":[0.0,0.0]},{"name":"radius","label":"Inclusion radius","kind":"float","default":0.3,"minimum":1e-06,"step":0.01},{"name":"inclusion_speed","label":"Inclusion speed","kind":"float","default":1.5,"minimum":1e-06,"unit":"speed"}]},{"stage":"medium","name":"constant","summary":"Spatially constant sound speed (homogeneous background).","params":[{"name":"background_speed","label":"Background speed","kind":"float","default":1.0,"minimum":1e-06,"step":0.01,"unit":"speed","help":"Uniform sound speed everywhere in the disk."}]},{"stage":"medium","name":"feature_phantom","summary":"Background plus additive smooth features (disk/ellipse/ring); reproduces the professor's breast tissue exactly.","params":[{"name":"preset","label":"Preset","kind":"choice","default":"professor_breast","choices":["professor_breast","custom"],"help":"Select a built-in phantom, or 'custom' to use the fields below."},{"name":"background_speed","label":"Background speed","kind":"float","default":1.0,"minimum":1e-06,"unit":"speed","help":"Used only when preset is 'custom'."},{"name":"sharpness","label":"Edge sharpness","kind":"float","default":80.0,"minimum":1.0,"step":1.0,"help":"tanh transition steepness shared by every feature edge."},{"name":"features","label":"Features","kind":"features","default":[{"type":"ellipse","label":"gland","center":[0.0275,-0.0275],"semi_axes":[0.3025,0.22],"contrast":0.3},{"type":"disk","label":"lesion_1_high_contrast","center":[-0.165,0.165],"radius":0.066,"contrast":0.8},{"type":"disk","label":"lesion_2_cyst","center":[0.1375,0.0825],"radius":0.044,"contrast":-0.35},{"type":"disk","label":"lesion_3_resolution_test","center":[0.055,-0.1925],"radius":0.033,"contrast":0.6},{"type":"ring","label":"skin","center":[0.0,0.0],"radius":0.55,"half_width":0.04,"contrast":0.25}],"help":"Ordered disk/ellipse/ring features; used only when preset is 'custom'."}]}],"forcing":[{"stage":"forcing","name":"fourier_modes","summary":"Named angular Fourier boundary patterns (constant, cos:m, sin:m, exp:m).","params":[{"name":"patterns","label":"Boundary patterns","kind":"patterns","default":["constant","cos:1","sin:1","cos:2","sin:2"],"help":"Ordered, unique pattern names; one batched solve column per pattern."}]}],"forward":[{"stage":"forward","name":"fem_p1_helmholtz","summary":"Complex P1 Helmholtz assembly with one batched LU over all patterns.","params":[{"name":"frequency","label":"Frequency","kind":"float","default":0.477464829275686,"minimum":1e-09,"step":0.01,"unit":"Hz","help":"Temporal frequency f; angular frequency is omega = 2 pi f. Default gives kR = 3 on the unit disk at c = 1."},{"name":"loss","label":"Loss (eta)","kind":"float","default":0.0,"minimum":0.0,"step":0.001,"help":"Dimensionless damping in k^2 = omega^2/c^2 (1 + i eta)."}]}],"measurement":[{"stage":"measurement","name":"weak_neumann","summary":"Weak boundary-mass projection of the outward normal flux D = I + iQ.","params":[]}]};
+
+const STAGES = ["mesh","medium","forcing","forward","measurement"];
+const DEPENDS = { mesh:[], medium:["mesh"], forcing:["mesh"], forward:["mesh","medium","forcing"], measurement:["mesh","forward"] };
+const KIND = { mesh:"live", medium:"live", forcing:"live", forward:"backend", measurement:"backend" };
+const CLIM = [0.90, 2.10];
+
+const clone = (x) => JSON.parse(JSON.stringify(x));
+const comp = (stage, name) => REGISTRY[stage].find(c => c.name === name);
+const defaultsOf = (c) => { const o={}; c.params.forEach(p => o[p.name]=clone(p.default)); return o; };
+
+// ---- engine state: one selection per stage ----
+const state = {};
+STAGES.forEach(s => {
+  const c = REGISTRY[s][0];
+  const first = s==="medium" ? comp("medium","feature_phantom")
+              : s==="mesh" ? comp("mesh","uniform_disk") : c;
+  state[s] = { component: first.name, params: defaultsOf(first) };
+});
+let selected = "medium";
+
+// ---------- inferno-ish perceptual colormap ----------
+const INFERNO = [
+  [0,0,4],[40,11,84],[101,21,110],[159,42,99],[212,72,66],[245,125,21],[250,193,39],[252,255,164]
+];
+function cmap(t){
+  t = Math.max(0, Math.min(1, t));
+  const x = t*(INFERNO.length-1), i = Math.floor(x), f = x-i;
+  const a = INFERNO[i], b = INFERNO[Math.min(i+1, INFERNO.length-1)];
+  return [a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f, a[2]+(b[2]-a[2])*f];
+}
+
+// ---------- exact JS port of usct.engine.phantom.feature_speed ----------
+const th = Math.tanh;
+function featureDelta(ft, x, y, s){
+  const c = ft.contrast;
+  if(ft.type==="disk"){ const r=Math.hypot(x-ft.center[0], y-ft.center[1]); return c*0.5*(1-th(s*(r-ft.radius))); }
+  if(ft.type==="ellipse"){ const m=((x-ft.center[0])/ft.semi_axes[0])**2+((y-ft.center[1])/ft.semi_axes[1])**2; return c*0.5*(1-th(s*(m-1))); }
+  if(ft.type==="ring"){ const r=Math.hypot(x-ft.center[0], y-ft.center[1]); const e=0.5*s;
+    const rise=0.5*(1+th(e*(r-(ft.radius-ft.half_width)))), fall=0.5*(1-th(e*(r-(ft.radius+ft.half_width)))); return c*rise*fall; }
+  return 0;
+}
+function soundSpeed(x, y){
+  const m = state.medium, p = m.params;
+  if(m.component==="constant") return p.background_speed;
+  if(m.component==="circular_inclusion"){
+    const d=Math.hypot(x-p.center[0], y-p.center[1]); return d<=p.radius ? p.inclusion_speed : p.background_speed;
+  }
+  // feature_phantom
+  const usePreset = p.preset && p.preset!=="custom";
+  const bg = usePreset ? 1.0 : p.background_speed;
+  const s  = usePreset ? 80.0 : p.sharpness;
+  const feats = usePreset ? comp("medium","feature_phantom").params.find(q=>q.name==="features").default : p.features;
+  let c = bg;
+  for(const ft of feats) c += featureDelta(ft, x, y, s);
+  return c;
+}
+
+// ---------- render specimen ----------
+const spCanvas = document.getElementById("specimen"), spx = spCanvas.getContext("2d");
+let viewMode = "specimen";
+function radiusOf(){ return state.mesh.params.radius || 1.0; }
+function bgSpeed(){ const p=state.medium.params;
+  if(state.medium.component==="feature_phantom" && (!p.preset||p.preset!=="custom")) return 1.0;
+  return p.background_speed ?? 1.0; }
+
+function renderSpecimen(){
+  const W=spCanvas.width, H=spCanvas.height, R=Math.min(W,H)/2-2, cx=W/2, cy=H/2, Rd=radiusOf();
+  const img = spx.createImageData(W,H), d=img.data;
+  for(let py=0; py<H; py++){
+    for(let px=0; px<W; px++){
+      const dx=px-cx, dy=py-cy, rr=Math.hypot(dx,dy), k=(py*W+px)*4;
+      if(rr>R){ d[k]=0;d[k+1]=0;d[k+2]=0;d[k+3]=0; continue; }
+      // map pixel -> physical (y up), scaled to domain radius
+      const X=(dx/R)*Rd, Y=-(dy/R)*Rd;
+      let val;
+      if(viewMode==="wavefield"){
+        // schematic standing-wave proxy - clearly labelled, NOT the real solve
+        const f=state.forward.params.frequency, kk=2*Math.PI*f/Math.max(soundSpeed(X,Y),1e-3);
+        val = 0.5+0.45*Math.cos(kk*rr/R*Rd)*Math.exp(-1.2*state.forward.params.loss*rr/R);
+      } else {
+        const c=soundSpeed(X,Y); val=(c-CLIM[0])/(CLIM[1]-CLIM[0]);
+      }
+      const col=cmap(val);
+      d[k]=col[0]; d[k+1]=col[1]; d[k+2]=col[2]; d[k+3]=255;
+    }
+  }
+  spx.putImageData(img,0,0);
+  // boundary transducer ring + forcing markers
+  spx.save();
+  spx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+  spx.globalAlpha=0.9; spx.lineWidth=1.5;
+  spx.beginPath(); spx.arc(cx,cy,R,0,2*Math.PI); spx.stroke();
+  const pats = state.forcing.params.patterns || [];
+  const nMark = Math.min(64, Math.max(16, pats.length*12));
+  spx.globalAlpha=0.85;
+  for(let i=0;i<nMark;i++){
+    const a=i/nMark*2*Math.PI, ex=cx+Math.cos(a)*R, ey=cy+Math.sin(a)*R;
+    let amp=0; pats.forEach(pt=>{ amp+=patternValue(pt, a); });
+    amp = pats.length? amp/pats.length : 0;
+    spx.fillStyle = amp>=0 ? spx.strokeStyle : getComputedStyle(document.documentElement).getPropertyValue('--amber').trim();
+    const s=2+Math.abs(amp)*3;
+    spx.beginPath(); spx.arc(ex,ey,s,0,2*Math.PI); spx.fill();
+  }
+  spx.restore();
+}
+function patternValue(name, theta){
+  if(name==="constant") return 1;
+  const m = name.match(/^(cos|sin|exp):(\d+)$/); if(!m) return 0;
+  const k=+m[2]; if(m[1]==="cos") return Math.cos(k*theta); if(m[1]==="sin") return Math.sin(k*theta); return Math.cos(k*theta);
+}
+
+// ---------- render scope (schematic I/Q boundary trace) ----------
+const scCanvas=document.getElementById("scope"), scx=scCanvas.getContext("2d");
+function renderScope(){
+  const W=scCanvas.width=scCanvas.clientWidth*2, H=scCanvas.height=240;
+  scx.clearRect(0,0,W,H); scx.scale(1,1);
+  const css=getComputedStyle(document.documentElement);
+  const accent=css.getPropertyValue('--accent').trim(), amber=css.getPropertyValue('--amber').trim(), grid=css.getPropertyValue('--edge').trim();
+  // grid
+  scx.strokeStyle=grid; scx.lineWidth=1;
+  for(let gx=0; gx<=8; gx++){ const x=gx/8*W; scx.beginPath(); scx.moveTo(x,0); scx.lineTo(x,H); scx.stroke(); }
+  scx.beginPath(); scx.moveTo(0,H/2); scx.lineTo(W,H/2); scx.stroke();
+  const pats=state.forcing.params.patterns||[], f=state.forward.params.frequency, eta=state.forward.params.loss;
+  const pat = pats[0]||"constant";
+  const draw=(phase, color)=>{
+    scx.strokeStyle=color; scx.lineWidth=2; scx.globalAlpha=0.95; scx.beginPath();
+    for(let i=0;i<=W;i++){
+      const theta=i/W*2*Math.PI - Math.PI;
+      // schematic: boundary flux ~ pattern shape modulated by frequency, damped by loss
+      const base=patternValue(pat, theta);
+      const v=base*Math.cos(phase + f*0.9) * (1-0.5*eta);
+      const y=H/2 - v*H*0.36;
+      i===0?scx.moveTo(i,y):scx.lineTo(i,y);
+    }
+    scx.stroke();
+  };
+  draw(0, accent);          // I
+  draw(Math.PI/2, amber);   // Q
+  scx.globalAlpha=1;
+}
+
+// ---------- readouts ----------
+function estDOF(r){ return Math.max(7, Math.round(2.05*Math.pow(4, r))); }
+function fmt(x, n=3){ return Number(x).toLocaleString(undefined,{maximumFractionDigits:n}); }
+function updateReadouts(){
+  document.getElementById("ro-medium").textContent = state.medium.component;
+  const f=state.forward.params.frequency;
+  document.getElementById("ro-freq").innerHTML = `<em>${fmt(f,3)}</em>`;
+  const kr = 2*Math.PI*f*radiusOf()/Math.max(bgSpeed(),1e-6);
+  document.getElementById("ro-kr").textContent = fmt(kr,2);
+  document.getElementById("ro-dof").textContent = estDOF(state.mesh.params.refinements).toLocaleString();
+  document.getElementById("lg-lo").textContent=CLIM[0].toFixed(2);
+  document.getElementById("lg-hi").textContent=CLIM[1].toFixed(2);
+}
+
+// ---------- status / dirtiness ----------
+function setStatus(stage, cls, text){
+  const el=document.querySelector(`.stage[data-stage="${stage}"] .status`);
+  if(!el) return; el.className="status "+cls; el.querySelector(".txt").textContent=text;
+}
+function markDownstreamStale(changed){
+  // stages whose output depends on `changed`
+  STAGES.forEach(s=>{
+    if(s===changed) return;
+    if(DEPENDS[s].includes(changed) || (DEPENDS[s].some(d=>affects(changed,d)))){
+      if(KIND[s]==="backend") setStatus(s,"stale","Stale - run engine");
+    }
+  });
+}
+function affects(changed, dep){ return dep===changed; }
+
+// after a change: recompute live stages, flag backend stages stale
+function recompute(changed){
+  updateReadouts();
+  renderSpecimen();
+  renderScope();
+  // live chips flash then settle
+  ["mesh","medium","forcing"].forEach(s=>{
+    if(s===changed || DEPENDS[s].includes(changed) || s===changed){
+      const el=document.querySelector(`.stage[data-stage="${s}"] .status`);
+      if(el){ el.classList.add("recalc"); setTimeout(()=>el&&el.classList.remove("recalc"), 500); }
+    }
+  });
+  // backend stages depend on mesh/medium/forcing/forward -> mark stale on any upstream change
+  const upstreamOfForward=["mesh","medium","forcing","forward"];
+  if(upstreamOfForward.includes(changed)) setStatus("forward","stale","Stale - run engine");
+  if(upstreamOfForward.includes(changed)||changed==="measurement") setStatus("measurement","stale","Stale - run engine");
+}
+
+// ---------- build the left rail ----------
+const stagesEl=document.getElementById("stages");
+function build(){
+  stagesEl.innerHTML="";
+  STAGES.forEach((stage, i)=>{
+    const sel=state[stage];
+    const c=comp(stage, sel.component);
+    const el=document.createElement("div");
+    el.className="stage"+(stage===selected?" sel open":"");
+    el.dataset.stage=stage;
+
+    const kind=KIND[stage];
+    const stTxt = kind==="live" ? "Live" : "Python";
+    const stCls = kind==="live" ? "live" : "backend";
+
+    el.innerHTML = `
+      <div class="stage-top">
+        <span class="idx">${i+1}</span>
+        <span class="stage-name">${stage}</span>
+        <span class="status ${stCls}"><span class="dot"></span><span class="txt">${stTxt}</span></span>
+      </div>
+      <div class="stage-body"></div>`;
+    stagesEl.appendChild(el);
+
+    el.querySelector(".stage-top").addEventListener("click", ()=>{
+      // Clean accordion: open the clicked card and close the rest; a second
+      // click on an already-open card collapses it.
+      const willOpen = !el.classList.contains("open");
+      document.querySelectorAll(".stage").forEach(s=>s.classList.remove("open","sel"));
+      if(willOpen){ el.classList.add("open","sel"); selected=stage; }
+      else { selected=null; }
+    });
+
+    const body=el.querySelector(".stage-body");
+    // implementation dropdown
+    const implRow=document.createElement("div"); implRow.className="impl-row";
+    implRow.innerHTML=`<label>impl</label>`;
+    const isel=document.createElement("select");
+    REGISTRY[stage].forEach(cc=>{ const o=document.createElement("option"); o.value=cc.name; o.textContent=cc.name; if(cc.name===sel.component)o.selected=true; isel.appendChild(o); });
+    isel.addEventListener("change", ()=>{
+      const nc=comp(stage, isel.value);
+      state[stage]={ component: nc.name, params: defaultsOf(nc) };
+      build(); recompute(stage);
+    });
+    implRow.appendChild(isel); body.appendChild(implRow);
+
+    const sum=document.createElement("div"); sum.className="summary"; sum.textContent=c.summary; body.appendChild(sum);
+
+    c.params.forEach(p=> body.appendChild(paramControl(stage, p)) );
+  });
+}
+
+function paramControl(stage, p){
+  const sel=state[stage], wrap=document.createElement("div"); wrap.className="param";
+  const val=sel.params[p.name];
+  const change=(nv)=>{ sel.params[p.name]=nv; recompute(stage); };
+
+  if(p.kind==="float"||p.kind==="int"){
+    const step=p.step ?? (p.kind==="int"?1:0.01);
+    const lo=p.minimum ?? (p.kind==="int"?0:0), hi=p.maximum ?? (p.kind==="int"?8: (p.name==="frequency"?4:(p.name==="sharpness"?200:(p.name==="loss"?0.05:3))));
+    wrap.innerHTML=`<div class="lab"><span class="name">${p.label}</span><span class="val"><span class="rv">${fmt(val, p.kind==="int"?0:3)}</span> <span class="unit">${p.unit||""}</span></span></div>`;
+    const r=document.createElement("input"); r.type="range"; r.min=lo; r.max=hi; r.step=step; r.value=val;
+    r.addEventListener("input", ()=>{ const nv=p.kind==="int"?Math.round(+r.value):+r.value; wrap.querySelector(".rv").textContent=fmt(nv,p.kind==="int"?0:3); change(nv); });
+    wrap.appendChild(r);
+    if(p.help){ const h=document.createElement("div"); h.className="help"; h.textContent=p.help; wrap.appendChild(h); }
+  }
+  else if(p.kind==="choice"){
+    wrap.innerHTML=`<div class="lab"><span class="name">${p.label}</span></div>`;
+    const s=document.createElement("select");
+    p.choices.forEach(ch=>{ const o=document.createElement("option"); o.value=ch;o.textContent=ch; if(ch===val)o.selected=true; s.appendChild(o); });
+    s.addEventListener("change", ()=>{ sel.params[p.name]=s.value; build(); recompute(stage); });
+    wrap.appendChild(s);
+    if(p.help){ const h=document.createElement("div"); h.className="help"; h.textContent=p.help; wrap.appendChild(h); }
+  }
+  else if(p.kind==="vec2"){
+    wrap.innerHTML=`<div class="lab"><span class="name">${p.label}</span></div>`;
+    const g=document.createElement("div"); g.className="vec2";
+    [0,1].forEach(idx=>{ const inp=document.createElement("input"); inp.type="number"; inp.step="0.01"; inp.value=val[idx];
+      inp.addEventListener("input", ()=>{ const nv=[...sel.params[p.name]]; nv[idx]=+inp.value; change(nv); }); g.appendChild(inp); });
+    wrap.appendChild(g);
+  }
+  else if(p.kind==="patterns"){
+    wrap.innerHTML=`<div class="lab"><span class="name">${p.label}</span></div>`;
+    const chips=document.createElement("div"); chips.className="chips";
+    (val||[]).forEach((name,idx)=>{ const ch=document.createElement("span"); ch.className="chip"; ch.innerHTML=`${name}`;
+      const x=document.createElement("button"); x.textContent="x"; x.title="remove"; x.addEventListener("click",()=>{ const nv=[...sel.params[p.name]]; nv.splice(idx,1); change(nv); build(); });
+      ch.appendChild(x); chips.appendChild(ch); });
+    wrap.appendChild(chips);
+    const add=document.createElement("div"); add.className="chip-add";
+    const s=document.createElement("select");
+    ["constant","cos:1","sin:1","cos:2","sin:2","cos:3","sin:3","exp:1","exp:2"].forEach(n=>{ const o=document.createElement("option"); o.value=n;o.textContent=n; s.appendChild(o); });
+    const b=document.createElement("button"); b.className="mini-btn"; b.textContent="+ add";
+    b.addEventListener("click", ()=>{ const nv=[...sel.params[p.name]]; if(!nv.includes(s.value)){ nv.push(s.value); change(nv); build(); } });
+    add.appendChild(s); add.appendChild(b); wrap.appendChild(add);
+    if(p.help){ const h=document.createElement("div"); h.className="help"; h.textContent=p.help; wrap.appendChild(h); }
+  }
+  else if(p.kind==="features"){
+    const usePreset = sel.params.preset && sel.params.preset!=="custom";
+    wrap.innerHTML=`<div class="lab"><span class="name">${p.label}</span><span class="val" style="color:var(--faint)">${usePreset?"preset - read-only":"editable"}</span></div>`;
+    const list = usePreset ? p.default : sel.params.features;
+    list.forEach((ft,idx)=>{
+      const f=document.createElement("div"); f.className="feat"+(usePreset?" readonly":"");
+      f.innerHTML=`<div class="feat-top"><span class="feat-type">${ft.type}</span><span class="feat-name">${ft.label||ft.type}</span></div>`;
+      if(!usePreset){
+        const del=document.createElement("button"); del.className="mini-btn feat-del"; del.textContent="remove";
+        del.addEventListener("click", ()=>{ const nv=clone(sel.params.features); nv.splice(idx,1); sel.params.features=nv; build(); recompute(stage); });
+        f.querySelector(".feat-top").appendChild(del);
+        f.appendChild(featNum("contrast", ft.contrast, -1, 1, 0.01, (v)=>{ ft.contrast=v; recompute(stage); }));
+        if(ft.type!=="ellipse") f.appendChild(featNum("radius", ft.radius ?? ft.half_width, 0.01, 0.6, 0.005, (v)=>{ if(ft.type==="ring") ft.half_width=v; else ft.radius=v; recompute(stage); }));
+      } else {
+        const info=document.createElement("div"); info.className="help";
+        info.textContent = ft.type==="disk" ? `center (${ft.center}) - r=${ft.radius} - contrast=${ft.contrast}` :
+                           ft.type==="ellipse" ? `center (${ft.center}) - axes (${ft.semi_axes}) - contrast=${ft.contrast}` :
+                           `r=${ft.radius} - half-width=${ft.half_width} - contrast=${ft.contrast}`;
+        f.appendChild(info);
+      }
+      wrap.appendChild(f);
+    });
+    if(!usePreset){
+      const b=document.createElement("button"); b.className="mini-btn"; b.textContent="+ add lesion";
+      b.addEventListener("click", ()=>{ const nv=clone(sel.params.features); nv.push({type:"disk",label:"lesion",center:[0,0],radius:0.08,contrast:0.5}); sel.params.features=nv; build(); recompute(stage); });
+      wrap.appendChild(b);
+    }
+  }
+  return wrap;
+}
+function featNum(name, value, lo, hi, step, on){
+  const w=document.createElement("div"); w.className="param"; w.style.margin="7px 0 0";
+  w.innerHTML=`<div class="lab"><span class="name">${name}</span><span class="val"><span class="rv">${fmt(value,3)}</span></span></div>`;
+  const r=document.createElement("input"); r.type="range"; r.min=lo; r.max=hi; r.step=step; r.value=value;
+  r.addEventListener("input", ()=>{ w.querySelector(".rv").textContent=fmt(+r.value,3); on(+r.value); });
+  w.appendChild(r); return w;
+}
+
+// ---------- viewport mode toggle ----------
+document.getElementById("vp-seg").addEventListener("click",(e)=>{
+  const b=e.target.closest("button"); if(!b) return;
+  viewMode=b.dataset.mode;
+  document.querySelectorAll("#vp-seg button").forEach(x=>x.classList.toggle("on", x===b));
+  document.getElementById("vp-title").textContent = viewMode==="specimen" ? "Specimen c(x)" : "Wavefield (schematic)";
+  const badge=document.getElementById("vp-badge");
+  if(viewMode==="specimen"){ badge.className="badge"; badge.textContent="live - exact port of feature_speed"; }
+  else { badge.className="badge warn"; badge.textContent="schematic - real field solved in Python"; }
+  renderSpecimen();
+});
+
+// ---------- legend gradient ----------
+function paintLegend(){
+  const bar=document.getElementById("legend-bar");
+  const stops=[]; for(let i=0;i<=6;i++){ const col=cmap(i/6); stops.push(`rgb(${col[0]|0},${col[1]|0},${col[2]|0}) ${i/6*100}%`); }
+  bar.style.background=`linear-gradient(90deg, ${stops.join(",")})`;
+}
+
+// ---------- theme ----------
+document.getElementById("theme").addEventListener("click", ()=>{
+  const cur=document.documentElement.getAttribute("data-theme");
+  const isDark = cur ? cur==="dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.setAttribute("data-theme", isDark?"light":"dark");
+  paintLegend(); renderSpecimen(); renderScope();
+});
+
+// ---------- boot ----------
+build(); updateReadouts(); paintLegend(); renderSpecimen(); renderScope();
+window.addEventListener("resize", ()=>{ renderScope(); });
+</script>
