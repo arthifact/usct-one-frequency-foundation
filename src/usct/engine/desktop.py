@@ -284,11 +284,11 @@ class Studio(QtWidgets.QMainWindow):
         right = QtWidgets.QVBoxLayout()
         right.setSpacing(10)
         self._fig = Figure(figsize=(6, 3.6), facecolor=PAPER)
-        self._ax = self._fig.add_axes((0, 0, 1, 1))
+        # Reserve a caption band at the top so no view's caption (short or long)
+        # can overlap the disk; the plot lives below it.
+        self._ax = self._fig.add_axes((0, 0, 1, 0.92))
         self._ax.set_facecolor(PAPER)
-        # Anchor the caption to the figure's top-left corner (whitespace beside
-        # the centered disk), reusing one artist so redraws never stack text.
-        self._tag = self._fig.text(0.012, 0.978, "", ha="left", va="top",
+        self._tag = self._fig.text(0.012, 0.985, "", ha="left", va="top",
                                     fontsize=9, color=INK, family="monospace")
         self._canvas = FigureCanvas(self._fig)
         self._canvas.setMinimumHeight(360)
@@ -524,7 +524,8 @@ class Studio(QtWidgets.QMainWindow):
             # the nodes are the triangle corners; dots shrink as the mesh grows
             boundary = data["boundary"]
             interior = np.setdiff1d(np.arange(len(x)), boundary, assume_unique=False)
-            dot = float(np.clip(1600.0 / max(len(x), 1), 0.6, 9.0))
+            # cap so the coarsest mesh (pill 3) sits just above pill 4, not huge
+            dot = float(np.clip(1600.0 / max(len(x), 1), 0.6, 3.3))
             ax.plot(x[interior], y[interior], "o", markersize=dot, markerfacecolor=GREEN,
                     markeredgecolor="none", alpha=0.9, linestyle="none")
             ax.plot(x[boundary], y[boundary], "o", markersize=dot * 1.9, markerfacecolor=ORANGE,
