@@ -218,7 +218,12 @@ the verified foundation without modifying it — see `docs/inversion_hypothesis.
   (`research/fwi_experiment.py`);
 - kR scaling study locating the direct-solver cost and pollution walls
   (`research/kr_scaling.py`, `docs/kr_scaling.md`): factor time ~ N^1.38,
-  pollution forces DOFs ~ (kR)^3, 2D research ceiling kR ≈ 50–80.
+  pollution forces DOFs ~ (kR)^3, 2D research ceiling kR ≈ 50–80;
+- spatially-varying **attenuation** as a physical field with a **verified** joint
+  (c, eta) adjoint gradient (`src/usct/attenuation.py`,
+  `tests/test_attenuation.py`, `docs/attenuation.md`). Physical loss damps the
+  interior resonances (45x at the worst); attenuation localizes but is poorly
+  conditioned (relative RMS 0.78 vs 0.30 for speed).
 
 Not implemented:
 

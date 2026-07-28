@@ -102,10 +102,12 @@ bearing gaps, roughly in order of how much they could change the picture:
    ceiling on the current direct path is `kR ≈ 50–80`. Reaching clinical `kR`/3D
    means slotting an iterative + preconditioned Helmholtz solver into the
    swappable `Forward` contract — which is exactly what that contract is for.
-2. **Attenuation.** The model is (near-)lossless; `eta` is currently a numerical
-   resonance stabilizer, not a physical absorption model. Real tissue attenuates
-   ~0.5–1 dB/cm/MHz, frequency-dependent. Inverting real data will require an
-   honest lossy model (and probably attenuation as a second unknown).
+2. **Attenuation — now a physical field (`docs/attenuation.md`).** `eta` is no
+   longer just a stabilizer: it is a spatially-varying attenuation field with a
+   verified joint `(c, eta)` adjoint gradient. Physical loss also damps the
+   interior resonances (45x at the worst). Open: attenuation imaging is poorly
+   conditioned (relative RMS 0.78 vs 0.30 for speed) and wants multi-frequency /
+   joint inversion.
 3. **DtN vs. a real transducer.** We prescribe pressure and measure flux on a
    continuous aperture. A physical ring prescribes normal velocity from *discrete*
    elements and measures pressure — a physically different boundary experiment,
