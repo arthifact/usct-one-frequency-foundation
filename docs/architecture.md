@@ -29,6 +29,26 @@ cli ──> io, dtn
 Numerical modules do not import the CLI, plotting, result I/O, or research
 directory. Importing `usct` creates no mesh, matrix, files, or figures.
 
+## The two sims have different roles
+
+- **`radiating/` is the instrument-facing forward** — the physically faithful,
+  open-medium model (no resonances; velocity-in / pressure-out, matching real
+  transducers). Build the real reconstruction path on this one.
+- **`dtn/` is the verified reference** — an idealized closed-cavity experiment
+  kept as the analytically-verifiable gold standard (cleanest exact Bessel
+  solution; the full `python -m usct verify` trust battery) and as a differential
+  cross-check. Not the physical instrument, but the oracle the numerics are proven
+  against.
+
+`dtn/` currently has more modules simply because it is the older, mature sim: it
+carries the whole forward pipeline (`solver`, `measurement`, `simulation`,
+`verification`) plus the first research layer (`inversion`, `attenuation`,
+`reconstruction`). `radiating/` is leaner (`forward` + `inversion`) because its
+full solve and its trivial boundary-pressure observable need no separate
+`solver`/`measurement` modules, and its experiments currently drive reconstruction
+inline. As the instrument path matures, radiating may grow its own driver /
+attenuation variant (ideally by generalizing the DtN ones into shared code).
+
 ## Files
 
 | File | Responsibility |

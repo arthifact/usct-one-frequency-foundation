@@ -141,6 +141,12 @@ Interpretation:
   broader reconstruction loop.
 - No codebase here establishes that the ideal boundary condition and flux
   measurement match physical transducers.
+- **Two forward sims, different roles:** `usct.radiating` (velocity->pressure, open
+  medium) is the **instrument-facing forward** to build the real path on;
+  `usct.dtn` (pressure->flux, closed cavity) is the **verified reference / test
+  oracle** with the exact-Bessel trust battery. They never import each other. The
+  DtN-vs-radiating choice is the source/receiver-quantity question still awaiting
+  the professor's confirmation (sec 10); radiating is the physically stronger bet.
 
 ## 5. Current verified status
 
