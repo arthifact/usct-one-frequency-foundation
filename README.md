@@ -142,6 +142,7 @@ pytest -q
 ruff check .
 ```
 
-The historical `old_lowf_inv.py`, when present, is excluded from the package and
-quality checks. It is evidence about earlier intent, not a runtime dependency.
-See [`legacy/README.md`](legacy/README.md).
+The professor's original `alpha_expr` prototype has been fully absorbed into the
+verified foundation (`usct.medium.PROFESSOR_BREAST_PHANTOM`, expressible as
+`configs/breast_phantom.toml`) and the legacy prototype file itself removed; its
+history remains in git.

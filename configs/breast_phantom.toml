@@ -1,6 +1,6 @@
-# The professor's breast phantom (old_lowf_inv.py alpha_expr), now expressed
-# as data: a constant water background with additive smooth features. Edit the
-# feature tables below to change the tissue; nothing about it is hidden in code.
+# The professor's breast phantom (originally the alpha_expr prototype), now
+# expressed as data: a constant water background with additive smooth features.
+# Edit the feature tables below to change the tissue; nothing is hidden in code.
 [domain]
 radius = 1.0
 refinements = 6

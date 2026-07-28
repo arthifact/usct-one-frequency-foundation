@@ -117,25 +117,27 @@ attribute a data-compression hypothesis to the professor without new evidence.
 
 ## 4. Current project vs. professor prototype vs. real equipment
 
-| Capability | Current project | `old_lowf_inv.py` | Real system |
+| Capability | Current project | Professor prototype (removed) | Real system |
 | --- | --- | --- | --- |
 | Steady-state Helmholtz | Verified | Present | Plausible |
 | Complex I/Q phasor | Ideal representation | Ideal representation | Requires calibrated demodulation |
 | Cosine/sine boundary modes | Verified | Present | Must prove the ring can synthesize them |
 | Boundary pressure -> flux | Verified mathematically | Intended | Hardware observable unconfirmed |
 | Multiple modes | One batched LU | Looped solves | Acquisition design unconfirmed |
-| Frequency stepping | Not implemented | Attempted | Future experiment |
-| Synthetic data | Saved forward results | Multi-frequency generation | Physical data later |
-| Adjoint gradient | Not implemented | Attempted, not trusted | Future software |
-| Inversion | Not implemented | Attempted with L-BFGS-B | Future milestone |
-| Structural prior | Not implemented | Partial/unclear | Must be explicit |
-| Noise/calibration/3D | Not modeled | Not modeled | Unavoidable |
+| Frequency stepping | Continuation (research) | Attempted | Future experiment |
+| Synthetic data | Disjoint-mesh + noise (research) | Multi-frequency generation | Physical data later |
+| Adjoint gradient | Verified (research) | Attempted, not trusted | Future software |
+| Inversion | Verified end-to-end (research) | Attempted with L-BFGS-B | Future milestone |
+| Structural prior | H1 smoothness (research) | Partial/unclear | Must be explicit |
+| Noise/calibration/3D | Noise studied; 3D not modeled | Not modeled | Unavoidable |
 
 Interpretation:
 
-- The current project matches the professor's **idealized forward direction**.
-- The legacy program is a rough prototype of the broader reconstruction loop.
-- Neither codebase establishes that the ideal boundary condition and flux
+- The current project matches the professor's **idealized forward direction**, and
+  now adds a verified adjoint/inversion research layer on top of it.
+- The professor prototype (removed; history in git) was a rough prototype of the
+  broader reconstruction loop.
+- No codebase here establishes that the ideal boundary condition and flux
   measurement match physical transducers.
 
 ## 5. Current verified status
@@ -177,9 +179,11 @@ Demonstration runs:
 - Recover flux weakly through a boundary-mass projection, not a noisy pointwise
   P1 gradient.
 - Retain I and Q; never reduce saved data to amplitude only.
-- Keep forward numerics independent of plotting, result I/O, CLI, legacy, and
-  future research code.
-- Do not import or extend `old_lowf_inv.py`; it is historical evidence only.
+- Keep the verified forward numerics independent of plotting, result I/O, CLI, and
+  research code.
+- Do not resurrect the removed prototype's patterns (global state, truth-dependent
+  mesh refinement, DOLFINx/PETSc, Gmsh, process pools); its behavior is already
+  reconstructed cleanly in the foundation.
 - Do not add inversion, optimization, adjoints, frequency schedules, GPU paths,
   PETSc, MPI, Gmsh, or new dependencies without an explicitly authorized
   milestone.
@@ -317,8 +321,9 @@ to a false local minimum.
 - `src/usct/solver.py`: explicit batched Dirichlet solve.
 - `src/usct/measurement.py`: weak outward-flux recovery.
 - `src/usct/verification.py`: analytic and convergence checks.
-- `research/README.md`: explicitly deferred research.
-- `old_lowf_inv.py`: legacy evidence; never a dependency.
+- `src/usct/inversion.py`, `reconstruction.py`, `attenuation.py`, `radiating.py`:
+  verified research layer (adjoint FWI, continuation, attenuation, open boundary).
+- `research/README.md`: research experiments and deferred work.
 
 ## 12. Commands to re-establish confidence
 

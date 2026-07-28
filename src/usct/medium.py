@@ -138,8 +138,8 @@ def feature_speed(
     return _checked_medium(domain, values, description)
 
 
-# The professor's exact breast phantom (old_lowf_inv.py alpha_expr, verbatim),
-# dimensionless with water background c = 1 and shared sharpness 80.
+# The professor's exact breast phantom (from the original alpha_expr prototype,
+# verbatim), dimensionless with water background c = 1 and shared sharpness 80.
 PROFESSOR_BREAST_PHANTOM: dict[str, Any] = {
     "background_speed": 1.0,
     "sharpness": 80.0,

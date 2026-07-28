@@ -16,8 +16,8 @@ simulation ──> results and plotting
 CLI ──> simulation, verification, results, plotting
 ```
 
-Numerical modules do not import the CLI, plotting, result I/O, legacy program, or
-research directory. Importing `usct` creates no mesh, matrix, files, or figures.
+Numerical modules do not import the CLI, plotting, result I/O, or research
+directory. Importing `usct` creates no mesh, matrix, files, or figures.
 
 ## Files
 
@@ -55,5 +55,4 @@ research directory. Importing `usct` creates no mesh, matrix, files, or figures.
 | `docs/problem_definition.md` | Formally defines the proposed steady-state modal tomography system, inverse problem, cost hypothesis, and validation path in accessible language. |
 | `docs/mathematics.md` | Derives the time convention, weak form, elimination, and weak flux recovery. |
 | `docs/questions_for_professor.md` | Tracks unresolved physical source, receiver, tank, and calibration questions. |
-| `research/README.md` | Separates future inverse-research hypotheses from the trusted forward foundation. |
-| `legacy/README.md` | Defines historical code as non-importable evidence only. |
+| `research/README.md` | Separates the inverse-research layer from the trusted forward foundation. |

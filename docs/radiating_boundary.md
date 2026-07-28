@@ -71,5 +71,6 @@ contaminates the data.
 - Remaining foundation fidelity items (from `docs/inversion_hypothesis.md`):
   realistic few-percent contrast, an SI (dimensional) end-to-end run, a measured
   noise-tolerance curve, discrete-element (finite `N`) drives, and eventually 3D.
-- Not yet wired into the engine registry as a `Forward`/`Measurement` pair (the
-  observable differs from DtN); that is a clean follow-up.
+- Exposed as a standalone module (`usct.radiating`), like the other research
+  layers; not wired into the CLI, since its observable (boundary pressure) differs
+  from the DtN `simulate` path.

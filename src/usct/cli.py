@@ -25,7 +25,6 @@ def _parser() -> argparse.ArgumentParser:
     plot = commands.add_parser("plot", help="plot an already-saved result")
     plot.add_argument("output", type=Path)
     plot.add_argument("--pattern")
-    commands.add_parser("studio", help="launch the native engine studio")
     return parser
 
 
@@ -121,17 +120,6 @@ def main(argv: list[str] | None = None) -> int:
         if arguments.command == "simulate":
             _simulate(arguments.config, arguments.output)
             return 0
-        if arguments.command == "studio":
-            try:
-                from usct.engine.desktop import launch
-            except ImportError:
-                print(
-                    "The studio needs PySide6. Install it with:\n"
-                    "  pip install -e '.[gui]'",
-                    file=sys.stderr,
-                )
-                return 2
-            return launch()
         from usct.plotting import plot_result
 
         destination = plot_result(arguments.output, arguments.pattern)
