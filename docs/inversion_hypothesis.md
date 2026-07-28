@@ -131,6 +131,9 @@ bearing gaps, roughly in order of how much they could change the picture:
   SI units on the radiating boundary (relative RMS 0.289; SI exactness verified).
 - `docs/noise_tolerance.md` — reconstruction error vs measurement noise; usable to
   ~14 dB SNR, breakdown near ~6 dB. Resolution-limited, not noise-limited.
+- `docs/calibration_tolerance.md` — reconstruction error vs systematic per-element
+  gain/phase miscalibration; harder than random noise but still tolerant to a
+  loose spec. Spatially-correlated miscalibration is the untested worse case.
 
 ## Reproduce
 

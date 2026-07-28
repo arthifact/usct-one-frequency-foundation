@@ -19,6 +19,7 @@ import from `research`.
   | 4 | `04-radiating-boundary/` | open/impedance boundary (resonances removed) | `docs/radiating_boundary.md` |
   | 5 | `05-si-reconstruction/` | realistic few-percent contrast in SI units | `docs/si_reconstruction.md` |
   | 6 | `06-noise-tolerance/` | reconstruction error vs measurement noise / SNR | `docs/noise_tolerance.md` |
+  | 7 | `07-calibration-tolerance/` | reconstruction error vs systematic element gain/phase miscalibration | `docs/calibration_tolerance.md` |
 
 The verified research *modules* those experiments call live in `src/usct`
 (`inversion`, `reconstruction`, `attenuation`, `radiating`) and are covered by

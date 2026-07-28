@@ -131,7 +131,7 @@ attribute a data-compression hypothesis to the professor without new evidence.
 | Adjoint gradient | Verified (research) | Attempted, not trusted | Future software |
 | Inversion | Verified end-to-end (research) | Attempted with L-BFGS-B | Future milestone |
 | Structural prior | H1 smoothness (research) | Partial/unclear | Must be explicit |
-| Noise/calibration/3D | Noise studied; 3D not modeled | Not modeled | Unavoidable |
+| Noise/calibration/3D | Noise + calibration studied; 3D not modeled | Not modeled | Unavoidable |
 
 Interpretation:
 
@@ -253,7 +253,13 @@ the verified foundation without modifying it — see `docs/inversion_hypothesis.
   `docs/noise_tolerance.md`): reconstruction error vs measurement noise on the SI
   radiating setup. Resolution-limited (flat ~0.29) below ~10% noise; graceful
   degradation; breakdown (error > 0.5) at ~50% noise (~6 dB SNR); usable to ~20%
-  (~14 dB). Random noise is not the binding constraint at this contrast/resolution.
+  (~14 dB). Random noise is not the binding constraint at this contrast/resolution;
+- **calibration-tolerance curve** (`research/07-calibration-tolerance/experiment.py`,
+  `docs/calibration_tolerance.md`): reconstruction error vs systematic per-element
+  gain/phase miscalibration (fixed across frequencies -> coherent). Harder than
+  random noise (breaks ~30-35% vs ~50%) but still tolerant: usable to ~20% amp /
+  ~11° phase, near-clean at ~5% / ~3°. Caveat: tests *random* per-element error;
+  *spatially-correlated* miscalibration is the untested worse case.
 
 Not implemented:
 

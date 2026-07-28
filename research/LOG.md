@@ -127,9 +127,30 @@ So random measurement noise is *not* the binding constraint at this
 contrast/resolution — `kR` is. A ~14 dB receiver SNR (easy for real electronics)
 suffices. (`docs/noise_tolerance.md`)
 
-**Why next (open):** this covered *random* noise. The error source that actually
-threatens real hardware is **systematic** element gain/phase **miscalibration**,
-which couples coherently — a calibration-tolerance study is the natural next step.
-After that: **discrete finite-N element drives** (element-count vs resolution), and
-eventually **3D**. The kR wall (step 2) remains the gate on clinical resolution and
-is the one place a new iterative/preconditioned solver must eventually go.
+**Why next:** this covered *random* noise. The error source that actually
+threatens real hardware is **systematic** element gain/phase miscalibration, which
+couples coherently — test that.
+
+---
+
+## 7. Calibration-tolerance curve — the coherent error  → `07-calibration-tolerance/`
+
+**Did:** gave each boundary element a *fixed* complex gain error (amplitude +
+phase), consistent across all frequencies and patterns (so it cannot average out
+like random noise), swept the level over several "devices", and overlaid the
+result on the step-06 noise curve.
+
+**Result:** calibration error **is** the harder error, as predicted — its curve
+sits above the noise curve at every level and it breaks (relative RMS > 0.5) near
+**~30-35%** vs **~50%** for noise. *But* recovery is still tolerant: usable to
+~**20% amplitude / ~11° phase**, near-clean at **5% / ~3°** — an achievable
+hardware spec. Honest caveat: this tests *spatially-random* per-element error (the
+least damaging kind); *spatially-correlated* miscalibration (drifts, ramps) can
+mimic real structure and is the untested worse case. (`docs/calibration_tolerance.md`)
+
+**Why next (open):** neither random noise nor random per-element calibration is the
+binding constraint — **resolution (`kR`) is**. The remaining fidelity items are
+**spatially-correlated calibration error**, **discrete finite-N element drives**
+(element-count vs resolution), and **3D**; and the `kR` wall (step 2) is the one
+place a new iterative/preconditioned solver must eventually go to reach clinical
+resolution.
