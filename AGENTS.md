@@ -202,21 +202,31 @@ Implemented and trusted:
 - saved-result plotting;
 - analytic and automated verification.
 
+Implemented as **research** (2026-07-27, authorized milestone; layered on top of
+the verified foundation without modifying it — see `docs/inversion_hypothesis.md`):
+
+- nodal sound-speed inversion parameterization;
+- complex-L2 boundary-flux objective in the `L2(boundary)` inner product,
+  with H1 (Tikhonov) regularization (`src/usct/inversion.py`);
+- adjoint-state gradient, **verified** by central-difference and second-order
+  Taylor tests (`tests/test_adjoint.py`) — the forward LU factorization is
+  re-used for the adjoint solve;
+- frequency-continuation L-BFGS-B reconstruction driver
+  (`src/usct/reconstruction.py`);
+- different-mesh synthetic observations with additive noise, and a first
+  end-to-end recovery + cold-start (cycle-skipping) control
+  (`research/fwi_experiment.py`).
+
 Not implemented:
 
-- arbitrary sound-speed inversion parameterization;
 - measured-data import;
 - discrete transmitter and receiver geometry;
 - absorbing or experimentally calibrated boundaries;
 - actual I/Q electronics;
 - physical boundary-mode acquisition and identifiability study;
-- multi-frequency experiment orchestration;
-- objective function and regularization;
-- adjoint gradient and Taylor tests;
-- optimizer or reconstruction;
 - density or attenuation inversion;
-- different-mesh synthetic observations;
-- noise/model mismatch studies;
+- kR scaling study and the direct-solver wall;
+- high-contrast/high-kR frozen cycle-skipping regression;
 - physical phantom or human data;
 - 3D propagation.
 

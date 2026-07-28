@@ -20,5 +20,6 @@ dist/
 .vscode/
 .DS_Store
 
-# Reproducible simulation outputs
+# Reproducible simulation and research outputs
 runs/
+research/outputs/
