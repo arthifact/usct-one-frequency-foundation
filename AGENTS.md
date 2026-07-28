@@ -223,13 +223,19 @@ the verified foundation without modifying it — see `docs/inversion_hypothesis.
   (c, eta) adjoint gradient (`src/usct/attenuation.py`,
   `tests/test_attenuation.py`, `docs/attenuation.md`). Physical loss damps the
   interior resonances (45x at the worst); attenuation localizes but is poorly
-  conditioned (relative RMS 0.78 vs 0.30 for speed).
+  conditioned (relative RMS 0.78 vs 0.30 for speed);
+- **radiating / impedance boundary** forward — the open-medium experiment beside
+  the verified DtN (`src/usct/radiating.py`, `tests/test_radiating.py`,
+  `docs/radiating_boundary.md`). Robin BC `du/dn - i k_b u = g`, observable is
+  boundary pressure (velocity-in/pressure-out). Analytic Bessel-verified; adjoint
+  FD-verified. Removes the interior resonances at the source (~11800x vs the DtN
+  cavity, no eta), and *improves* reconstruction (relative RMS 0.197 vs 0.30).
 
 Not implemented:
 
 - measured-data import;
-- discrete transmitter and receiver geometry;
-- absorbing or experimentally calibrated boundaries;
+- discrete transmitter and receiver geometry (finite element count);
+- experimentally calibrated boundaries;
 - actual I/Q electronics;
 - physical boundary-mode acquisition and identifiability study;
 - density or attenuation inversion;

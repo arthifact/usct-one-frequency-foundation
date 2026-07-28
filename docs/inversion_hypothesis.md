@@ -112,10 +112,11 @@ bearing gaps, roughly in order of how much they could change the picture:
    continuous aperture. A physical ring prescribes normal velocity from *discrete*
    elements and measures pressure — a physically different boundary experiment,
    and one that caps `m_max` at ~N_elements/2 (spatial Nyquist).
-4. **Interior resonances / boundary condition.** Hard Dirichlet on a disk is a
-   resonant cavity; an open water tank radiates. An absorbing/impedance boundary
-   would be both more faithful and free of the resonances the `eta` stabilizer
-   currently papers over.
+4. **Interior resonances / boundary condition — addressed (`docs/radiating_boundary.md`).**
+   The hard-Dirichlet cavity has been replaced by an open, radiating (impedance)
+   boundary: analytic-verified, resonances removed at the source (~11800x vs the
+   cavity, no `eta`), and it *improves* reconstruction (relative RMS 0.197 vs
+   0.30). This is the physically faithful velocity-in / pressure-out experiment.
 5. **Higher contrast + real cycle-skipping.** The frozen failure here is mild.
    A high-contrast / high-`kR` case where cold-start fails outright while
    continuation succeeds should be added as a regression fixture.
