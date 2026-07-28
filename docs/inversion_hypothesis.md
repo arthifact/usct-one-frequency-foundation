@@ -129,6 +129,8 @@ bearing gaps, roughly in order of how much they could change the picture:
 - `docs/kr_scaling.md` — the direct-solver cost and pollution walls.
 - `docs/si_reconstruction.md` — realistic few-percent contrast recovered in real
   SI units on the radiating boundary (relative RMS 0.289; SI exactness verified).
+- `docs/noise_tolerance.md` — reconstruction error vs measurement noise; usable to
+  ~14 dB SNR, breakdown near ~6 dB. Resolution-limited, not noise-limited.
 
 ## Reproduce
 

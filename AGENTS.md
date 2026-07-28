@@ -240,7 +240,12 @@ the verified foundation without modifying it — see `docs/inversion_hypothesis.
   38.2 kHz), disjoint-mesh data + 1% noise. Recovers all three features; RMS
   error 5.97 m/s (0.40%), relative RMS 0.289 -- matching the dimensionless proof
   at real tissue contrast in real units. SI exactness locked by
-  `test_radiating.py::test_si_scale_invariance` (forward scales by length only).
+  `test_radiating.py::test_si_scale_invariance` (forward scales by length only);
+- **noise-tolerance curve** (`research/noise_tolerance.py`,
+  `docs/noise_tolerance.md`): reconstruction error vs measurement noise on the SI
+  radiating setup. Resolution-limited (flat ~0.29) below ~10% noise; graceful
+  degradation; breakdown (error > 0.5) at ~50% noise (~6 dB SNR); usable to ~20%
+  (~14 dB). Random noise is not the binding constraint at this contrast/resolution.
 
 Not implemented:
 

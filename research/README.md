@@ -28,6 +28,8 @@ Experiments (each writes to `research/outputs/`, which is gitignored):
 - `kr_scaling.py` — the direct-solver cost and pollution walls (`docs/kr_scaling.md`).
 - `si_reconstruction.py` — realistic few-percent contrast in SI units
   (`docs/si_reconstruction.md`).
+- `noise_tolerance.py` — reconstruction error vs measurement noise / SNR
+  (`docs/noise_tolerance.md`).
 
 ## Still deferred
 
