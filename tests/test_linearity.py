@@ -2,11 +2,11 @@
 
 import numpy as np
 
-from usct.domain import Domain
-from usct.forcing import BoundaryForcing, build_boundary_forcing
-from usct.measurement import project_neumann_trace
-from usct.operator import HelmholtzOperator
-from usct.solver import solve_dirichlet
+from usct.dtn.measurement import project_neumann_trace
+from usct.dtn.solver import solve_dirichlet
+from usct.physics.domain import Domain
+from usct.physics.forcing import BoundaryForcing, build_boundary_forcing
+from usct.physics.operator import HelmholtzOperator
 
 
 def _relative_error(numerical, reference) -> float:

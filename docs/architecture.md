@@ -1,19 +1,29 @@
 # Architecture
 
-The foundation has a single dependency direction:
+`src/usct` is organized so the two forward **sims** are separated, their shared
+**physics** lives in one place, and it is obvious where to add what:
 
 ```text
-config
-  ├──> domain
-  ├──> medium
-  └──> forcing
+physics/     shared primitives both sims build on:
+             domain, medium, forcing, operator, boundary
+dtn/         SIM 1 -- Dirichlet-to-Neumann (pressure in -> flux out):
+             solver, measurement, simulation, verification,
+             inversion, attenuation, reconstruction
+radiating/   SIM 2 -- radiating/impedance (velocity in -> pressure out):
+             forward, inversion
+io/          config, results, plotting
+cli.py       command-line interface (explain / verify / simulate / plot)
+```
 
-domain + medium ──> operator
-operator + forcing ──> solver
-operator + solver ──> measurement
-foundation pieces ──> simulation
-simulation ──> results and plotting
-CLI ──> simulation, verification, results, plotting
+Dependency direction is acyclic, and **the two sims never import each other** --
+each depends only on `physics`:
+
+```text
+physics   <── dtn          (sim 1 builds on shared physics)
+physics   <── radiating    (sim 2 builds on shared physics)
+physics   <── io.config
+dtn.simulation <── io.results, io.plotting
+cli ──> io, dtn
 ```
 
 Numerical modules do not import the CLI, plotting, result I/O, or research
@@ -30,17 +40,27 @@ directory. Importing `usct` creates no mesh, matrix, files, or figures.
 | `configs/tissue_disk.toml` | SI demonstration with one centered circular sound-speed inclusion in water; it is not the professor's full phantom. |
 | `src/usct/__init__.py` | Exports immutable configuration records and the one public simulation entry point; performs no work. |
 | `src/usct/__main__.py` | Connects `python -m usct` to the CLI. |
-| `src/usct/config.py` | Loads TOML into frozen records, validates values and forcing names, and enforces actual points per wavelength. |
-| `src/usct/domain.py` | Builds a truth-independent, uniformly refined scikit-fem disk and deterministic degree-of-freedom partitions. |
-| `src/usct/medium.py` | Constructs validated constant or circular-inclusion nodal sound-speed arrays. |
-| `src/usct/operator.py` | Assembles inspectable complex128 stiffness, wave-mass, and Helmholtz matrices. |
-| `src/usct/forcing.py` | Parses and evaluates only the declared constant and Fourier boundary patterns. |
-| `src/usct/solver.py` | Applies explicit Dirichlet block elimination and one batched sparse LU, reporting residual and timing diagnostics. |
-| `src/usct/measurement.py` | Recovers the outward Neumann trace by one boundary-mass factorization and returns angle-sorted complex samples. |
-| `src/usct/simulation.py` | Orchestrates exactly one boundary-driven experiment and records assumptions and dependency versions. |
-| `src/usct/results.py` | Saves numeric arrays to NPZ, readable metadata to JSON, and loads with pickle disabled. |
-| `src/usct/plotting.py` | Uses the actual triangular mesh to create a seven-view, noninteractive overview from saved data. |
-| `src/usct/verification.py` | Implements Bessel, sign, residual, linearity, Fourier-identity, and three-mesh convergence checks. |
+| **`src/usct/physics/`** | **Shared primitives used by both sims.** |
+| `src/usct/physics/domain.py` | Builds a truth-independent, uniformly refined scikit-fem disk and deterministic degree-of-freedom partitions. |
+| `src/usct/physics/medium.py` | Constructs validated constant, circular-inclusion, or feature-phantom nodal sound-speed arrays. |
+| `src/usct/physics/forcing.py` | Parses and evaluates only the declared constant and Fourier boundary patterns. |
+| `src/usct/physics/operator.py` | Assembles the inspectable complex128 Helmholtz operator; also holds the shared FEM forms (stiffness, adjoint-gradient load) used by both sims' inversions. |
+| `src/usct/physics/boundary.py` | Shared boundary tooling: the L2 boundary mass matrix and periodic cross-mesh flux resampling. |
+| **`src/usct/dtn/`** | **Sim 1: Dirichlet-to-Neumann (pressure in, flux out).** |
+| `src/usct/dtn/solver.py` | Applies explicit Dirichlet block elimination and one batched sparse LU, reporting residual and timing diagnostics. |
+| `src/usct/dtn/measurement.py` | Recovers the outward Neumann flux by a boundary-mass projection and returns angle-sorted complex samples. |
+| `src/usct/dtn/simulation.py` | Orchestrates exactly one boundary-driven experiment and records assumptions and dependency versions. |
+| `src/usct/dtn/verification.py` | Implements Bessel, sign, residual, linearity, Fourier-identity, and three-mesh convergence checks. |
+| `src/usct/dtn/inversion.py` | Complex-L2 flux-misfit objective and adjoint-state gradient (research). |
+| `src/usct/dtn/attenuation.py` | Complex-medium forward and joint `(c, eta)` adjoint gradient (research). |
+| `src/usct/dtn/reconstruction.py` | Bounded L-BFGS-B frequency-continuation FWI driver (research). |
+| **`src/usct/radiating/`** | **Sim 2: radiating/impedance boundary (velocity in, pressure out).** |
+| `src/usct/radiating/forward.py` | Open-boundary forward solve; boundary-pressure observable; analytic Bessel reference. |
+| `src/usct/radiating/inversion.py` | Complex-L2 boundary-pressure objective and adjoint-state gradient (research). |
+| **`src/usct/io/`** | **Configuration and result I/O.** |
+| `src/usct/io/config.py` | Loads TOML into frozen records, validates values and forcing names, and enforces actual points per wavelength. |
+| `src/usct/io/results.py` | Saves numeric arrays to NPZ, readable metadata to JSON, and loads with pickle disabled. |
+| `src/usct/io/plotting.py` | Uses the actual triangular mesh to create a seven-view, noninteractive overview from saved data. |
 | `src/usct/cli.py` | Implements `explain`, `verify`, `simulate`, and saved-result `plot` with `argparse`. |
 | `tests/conftest.py` | Shares small deterministic numerical fixtures without global solver state. |
 | `tests/test_config.py` | Tests immutable TOML records, invalid inputs, pattern validation, and wavelength diagnostics. |

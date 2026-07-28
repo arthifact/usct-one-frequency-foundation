@@ -21,7 +21,7 @@ frequency-linear tissue attenuation `alpha ~ f` gives a nearly frequency-flat
 real axis, damping the cavity resonances the lossless DtN model suffers.
 
 Adjoint. `A` stays complex-symmetric (`A^T = A`), so the same trick as
-`usct.inversion` holds: the forward interior LU factorization is re-used for the
+`usct.dtn.inversion` holds: the forward interior LU factorization is re-used for the
 adjoint solve (`trans="H"`). A single assembled load `L_j = integral phi_j
 conj(lambda) u` gives *both* gradients:
 
@@ -29,7 +29,7 @@ conj(lambda) u` gives *both* gradients:
     dJ/deta_j =  omega^2 * m_j * Im[L_j]              (-> attenuation)
 
 with `m = 1/c^2`. The scalar-`eta`, speed-only case reduces exactly to
-`usct.inversion.objective_and_gradient` (cross-checked in tests). Both gradients
+`usct.dtn.inversion.objective_and_gradient` (cross-checked in tests). Both gradients
 are verified against finite differences and a Taylor test in
 `tests/test_attenuation.py`.
 """
@@ -42,10 +42,10 @@ from scipy import sparse
 from scipy.sparse.linalg import splu
 from skfem import BilinearForm, asm
 
-from usct.domain import Domain
-from usct.forcing import BoundaryForcing
-from usct.inversion import _gradient_load_form, _stiffness_form
-from usct.measurement import boundary_mass_matrix
+from usct.physics.boundary import boundary_mass_matrix
+from usct.physics.domain import Domain
+from usct.physics.forcing import BoundaryForcing
+from usct.physics.operator import _gradient_load_form, _stiffness_form
 
 
 @BilinearForm(dtype=np.complex128)

@@ -1,20 +1,21 @@
-"""Weak L2 projection of the outward Neumann boundary trace."""
+"""DtN measurement: weak L2 projection of the outward Neumann boundary trace.
+
+The observable for sim 1 (Dirichlet-to-Neumann): given a solved pressure field,
+recover the outward normal flux ``D = I + iQ`` on the boundary by an L2 projection
+against the shared boundary mass matrix. The radiating sim's observable (boundary
+pressure) lives in :mod:`usct.radiating.forward` instead.
+"""
 
 from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.sparse.linalg import splu
-from skfem import BilinearForm, FacetBasis, asm
 
-from usct.domain import Domain
-from usct.operator import HelmholtzOperator
-from usct.solver import FieldSolution, normalize_volume_rhs
-
-
-@BilinearForm
-def _boundary_mass_form(u, v, _):
-    return u * v
+from usct.dtn.solver import FieldSolution, normalize_volume_rhs
+from usct.physics.boundary import boundary_mass_matrix
+from usct.physics.domain import Domain
+from usct.physics.operator import HelmholtzOperator
 
 
 @dataclass(frozen=True)
@@ -60,16 +61,6 @@ class BoundaryResponse:
         """Complex-response phase in radians."""
 
         return np.angle(self.complex_response)
-
-
-def boundary_mass_matrix(domain: Domain):
-    """Assemble the real boundary mass matrix restricted to boundary degrees of freedom."""
-
-    facets = domain.mesh.boundary_facets()
-    facet_basis = FacetBasis(domain.mesh, domain.basis.elem, facets=facets)
-    full_mass = asm(_boundary_mass_form, facet_basis).tocsc()
-    boundary = domain.boundary_dofs
-    return full_mass[boundary][:, boundary].tocsc()
 
 
 def project_neumann_trace(

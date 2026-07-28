@@ -9,9 +9,9 @@ trusted, so these run on every commit.
 import numpy as np
 import pytest
 
-from usct.domain import build_disk
-from usct.forcing import build_boundary_forcing
-from usct.inversion import forward_flux, objective_and_gradient
+from usct.dtn.inversion import forward_flux, objective_and_gradient
+from usct.physics.domain import build_disk
+from usct.physics.forcing import build_boundary_forcing
 
 
 def _smooth_speed(domain, amplitude, center, width):

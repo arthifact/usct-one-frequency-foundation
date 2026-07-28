@@ -2,7 +2,7 @@
 
 Second physics-fidelity slice, and the more important one: it replaces the model's
 one physically *wrong* piece. Built on the verified foundation without modifying
-it — `src/usct/radiating.py`, gated by `tests/test_radiating.py`.
+it — `src/usct/radiating/`, gated by `tests/test_radiating.py`.
 
 ## The problem it fixes
 

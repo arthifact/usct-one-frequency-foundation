@@ -27,11 +27,12 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
-from usct.domain import build_disk  # noqa: E402
-from usct.forcing import build_boundary_forcing  # noqa: E402
-from usct.inversion import forward_flux, resample_flux_to  # noqa: E402
-from usct.medium import feature_speed  # noqa: E402
-from usct.reconstruction import Stage, adaptive_patterns, reconstruct  # noqa: E402
+from usct.dtn.inversion import forward_flux  # noqa: E402
+from usct.dtn.reconstruction import Stage, adaptive_patterns, reconstruct  # noqa: E402
+from usct.physics.boundary import resample_flux_to  # noqa: E402
+from usct.physics.domain import build_disk  # noqa: E402
+from usct.physics.forcing import build_boundary_forcing  # noqa: E402
+from usct.physics.medium import feature_speed  # noqa: E402
 
 RADIUS = 1.0
 LOSS = 1e-3  # small stabilizer against interior Dirichlet resonances (known constant)

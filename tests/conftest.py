@@ -5,12 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from usct.config import SimulationConfig, load_config
-from usct.domain import Domain, build_disk
-from usct.medium import Medium, constant_speed
-from usct.operator import HelmholtzOperator, assemble_helmholtz
-from usct.simulation import SimulationResult, simulate_dtn_one_frequency
-from usct.verification import AnalyticMetrics, run_analytic_disk
+from usct.dtn.simulation import SimulationResult, simulate_dtn_one_frequency
+from usct.dtn.verification import AnalyticMetrics, run_analytic_disk
+from usct.io.config import SimulationConfig, load_config
+from usct.physics.domain import Domain, build_disk
+from usct.physics.medium import Medium, constant_speed
+from usct.physics.operator import HelmholtzOperator, assemble_helmholtz
 
 
 @pytest.fixture(scope="session")

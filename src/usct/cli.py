@@ -5,10 +5,10 @@ import sys
 from pathlib import Path
 from textwrap import dedent
 
-from usct.config import load_config, wavelength_diagnostics
-from usct.results import save_result
-from usct.simulation import simulate_dtn_one_frequency
-from usct.verification import VerificationSummary, run_verification
+from usct.dtn.simulation import simulate_dtn_one_frequency
+from usct.dtn.verification import VerificationSummary, run_verification
+from usct.io.config import load_config, wavelength_diagnostics
+from usct.io.results import save_result
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -120,7 +120,7 @@ def main(argv: list[str] | None = None) -> int:
         if arguments.command == "simulate":
             _simulate(arguments.config, arguments.output)
             return 0
-        from usct.plotting import plot_result
+        from usct.io.plotting import plot_result
 
         destination = plot_result(arguments.output, arguments.pattern)
         print(f"wrote {destination}")

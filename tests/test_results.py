@@ -5,9 +5,9 @@ from pathlib import Path
 
 import numpy as np
 
-from usct.plotting import plot_result
-from usct.results import load_result, save_result
-from usct.simulation import SimulationResult
+from usct.dtn.simulation import SimulationResult
+from usct.io.plotting import plot_result
+from usct.io.results import load_result, save_result
 
 
 def test_save_load_round_trip_preserves_complex_data(

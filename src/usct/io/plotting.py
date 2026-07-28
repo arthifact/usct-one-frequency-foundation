@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.tri import Triangulation
 
-from usct.results import SavedResult, load_result
+from usct.io.results import SavedResult, load_result
 
 _GUIDE_COLOR = "#176B87"
 

@@ -8,13 +8,13 @@ exactly to the verified speed-only path when attenuation is zero.
 import numpy as np
 import pytest
 
-from usct.attenuation import (
+from usct.dtn.attenuation import (
     forward_flux_complex,
     joint_objective_and_gradient,
 )
-from usct.domain import build_disk
-from usct.forcing import build_boundary_forcing
-from usct.inversion import objective_and_gradient
+from usct.dtn.inversion import objective_and_gradient
+from usct.physics.domain import build_disk
+from usct.physics.forcing import build_boundary_forcing
 
 
 def _bump(domain, amplitude, center, width, floor=0.0):

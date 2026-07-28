@@ -1,6 +1,7 @@
 """Trusted one-frequency USCT Dirichlet-to-Neumann forward simulation."""
 
-from usct.config import (
+from usct.dtn.simulation import SimulationResult, simulate_dtn_one_frequency
+from usct.io.config import (
     DomainConfig,
     ForcingConfig,
     MediumConfig,
@@ -8,7 +9,6 @@ from usct.config import (
     WaveConfig,
     load_config,
 )
-from usct.simulation import SimulationResult, simulate_dtn_one_frequency
 
 __all__ = [
     "DomainConfig",

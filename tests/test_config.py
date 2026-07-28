@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from usct.config import load_config, validate_config
+from usct.io.config import load_config, validate_config
 
 
 def test_valid_toml_loads_into_immutable_records() -> None:

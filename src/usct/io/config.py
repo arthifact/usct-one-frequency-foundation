@@ -8,9 +8,9 @@ from typing import Any
 
 import numpy as np
 
-from usct.domain import build_disk
-from usct.forcing import parse_pattern_name
-from usct.medium import feature_speed
+from usct.physics.domain import build_disk
+from usct.physics.forcing import parse_pattern_name
+from usct.physics.medium import feature_speed
 
 
 @dataclass(frozen=True)

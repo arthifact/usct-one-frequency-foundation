@@ -7,13 +7,13 @@ from math import pi
 from platform import python_version
 from typing import Any
 
-from usct.config import SimulationConfig, validate_config
-from usct.domain import Domain, build_disk
-from usct.forcing import BoundaryForcing, build_boundary_forcing
-from usct.measurement import BoundaryResponse, project_neumann_trace
-from usct.medium import Medium, circular_inclusion, constant_speed, feature_speed
-from usct.operator import assemble_helmholtz
-from usct.solver import FieldSolution, solve_dirichlet
+from usct.dtn.measurement import BoundaryResponse, project_neumann_trace
+from usct.dtn.solver import FieldSolution, solve_dirichlet
+from usct.io.config import SimulationConfig, validate_config
+from usct.physics.domain import Domain, build_disk
+from usct.physics.forcing import BoundaryForcing, build_boundary_forcing
+from usct.physics.medium import Medium, circular_inclusion, constant_speed, feature_speed
+from usct.physics.operator import assemble_helmholtz
 
 TIME_CONVENTION = "exp(-i omega t)"
 MEASUREMENT_TYPE = "dirichlet_to_neumann"

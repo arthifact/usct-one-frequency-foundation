@@ -213,12 +213,12 @@ the verified foundation without modifying it — see `docs/inversion_hypothesis.
 
 - nodal sound-speed inversion parameterization;
 - complex-L2 boundary-flux objective in the `L2(boundary)` inner product,
-  with H1 (Tikhonov) regularization (`src/usct/inversion.py`);
+  with H1 (Tikhonov) regularization (`src/usct/dtn/inversion.py`);
 - adjoint-state gradient, **verified** by central-difference and second-order
   Taylor tests (`tests/test_adjoint.py`) — the forward LU factorization is
   re-used for the adjoint solve;
 - frequency-continuation L-BFGS-B reconstruction driver
-  (`src/usct/reconstruction.py`);
+  (`src/usct/dtn/reconstruction.py`);
 - different-mesh synthetic observations with additive noise, and a first
   end-to-end recovery + cold-start (cycle-skipping) control
   (`research/01-adjoint-fwi/experiment.py`);
@@ -226,12 +226,12 @@ the verified foundation without modifying it — see `docs/inversion_hypothesis.
   (`research/02-kr-scaling/experiment.py`, `docs/kr_scaling.md`): factor time ~ N^1.38,
   pollution forces DOFs ~ (kR)^3, 2D research ceiling kR ≈ 50–80;
 - spatially-varying **attenuation** as a physical field with a **verified** joint
-  (c, eta) adjoint gradient (`src/usct/attenuation.py`,
+  (c, eta) adjoint gradient (`src/usct/dtn/attenuation.py`,
   `tests/test_attenuation.py`, `docs/attenuation.md`). Physical loss damps the
   interior resonances (45x at the worst); attenuation localizes but is poorly
   conditioned (relative RMS 0.78 vs 0.30 for speed);
 - **radiating / impedance boundary** forward — the open-medium experiment beside
-  the verified DtN (`src/usct/radiating.py`, `tests/test_radiating.py`,
+  the verified DtN (`src/usct/radiating/`, `tests/test_radiating.py`,
   `docs/radiating_boundary.md`). Robin BC `du/dn - i k_b u = g`, observable is
   boundary pressure (velocity-in/pressure-out). Analytic Bessel-verified; adjoint
   FD-verified. Removes the interior resonances at the source (~11800x vs the DtN
@@ -323,14 +323,18 @@ to a false local minimum.
 - `docs/architecture.md`: module responsibilities and dependency direction.
 - `docs/questions_for_professor.md`: detailed hardware questions.
 - `README.md`: installation and user commands.
-- `src/usct/simulation.py`: current one-frequency forward orchestration.
-- `src/usct/operator.py`: inspectable Helmholtz operator.
-- `src/usct/solver.py`: explicit batched Dirichlet solve.
-- `src/usct/measurement.py`: weak outward-flux recovery.
-- `src/usct/verification.py`: analytic and convergence checks.
-- `src/usct/inversion.py`, `reconstruction.py`, `attenuation.py`, `radiating.py`:
-  verified research layer (adjoint FWI, continuation, attenuation, open boundary).
-- `research/README.md`: research experiments and deferred work.
+- `docs/architecture.md`: the package layout (physics / dtn / radiating / io) and
+  where to add what.
+- `src/usct/physics/`: shared primitives both sims use (`domain`, `medium`,
+  `forcing`, `operator`, `boundary`).
+- `src/usct/dtn/`: sim 1 (pressure->flux). `solver`, `measurement`, `simulation`,
+  `verification` are the verified forward; `inversion`, `attenuation`,
+  `reconstruction` are the verified research layer.
+- `src/usct/radiating/`: sim 2 (velocity->pressure). `forward` + `inversion`
+  (open/impedance boundary, research).
+- `src/usct/io/`: `config`, `results`, `plotting`.
+- `research/README.md` and `research/LOG.md`: the experiments and the
+  chronological research narrative.
 
 ## 12. Commands to re-establish confidence
 

@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from usct.domain import Domain
+from usct.physics.domain import Domain
 
 
 @dataclass(frozen=True)

@@ -5,10 +5,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from usct.config import load_config, validate_config
-from usct.domain import build_disk
-from usct.medium import PROFESSOR_BREAST_PHANTOM, feature_speed
-from usct.simulation import simulate_dtn_one_frequency
+from usct.dtn.simulation import simulate_dtn_one_frequency
+from usct.io.config import load_config, validate_config
+from usct.physics.domain import build_disk
+from usct.physics.medium import PROFESSOR_BREAST_PHANTOM, feature_speed
 
 PHANTOM = Path("configs/breast_phantom.toml")
 

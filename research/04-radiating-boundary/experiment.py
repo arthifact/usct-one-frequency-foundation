@@ -1,6 +1,6 @@
 """Radiating boundary: resonances gone (not damped), and still fully invertible.
 
-Two demonstrations built on the verified radiating forward (`src/usct/radiating.py`):
+Two demonstrations built on the verified radiating forward (`src/usct/radiating/`):
 
 1. NO RESONANCES. Sweep kR across the interior Dirichlet eigenvalues (Bessel
    zeros). The hard-walled DtN cavity spikes at every one; the radiating boundary
@@ -27,19 +27,21 @@ import numpy as np  # noqa: E402
 from scipy.optimize import minimize  # noqa: E402
 from scipy.special import jn_zeros  # noqa: E402
 
-from usct.domain import build_disk  # noqa: E402
-from usct.forcing import build_boundary_forcing  # noqa: E402
-from usct.inversion import resample_flux_to  # noqa: E402
-from usct.measurement import boundary_mass_matrix  # noqa: E402
-from usct.medium import constant_speed, feature_speed  # noqa: E402
-from usct.operator import assemble_helmholtz  # noqa: E402
-from usct.radiating import (  # noqa: E402
+from usct.dtn.solver import solve_dirichlet  # noqa: E402
+from usct.physics.boundary import (
+    boundary_mass_matrix,  # noqa: E402
+    resample_flux_to,  # noqa: E402
+)
+from usct.physics.domain import build_disk  # noqa: E402
+from usct.physics.forcing import build_boundary_forcing  # noqa: E402
+from usct.physics.medium import constant_speed, feature_speed  # noqa: E402
+from usct.physics.operator import assemble_helmholtz  # noqa: E402
+from usct.radiating.forward import (  # noqa: E402
     forward_boundary_pressure,
     full_boundary_mass,
-    radiating_objective_and_gradient,
     solve_radiating,
 )
-from usct.solver import solve_dirichlet  # noqa: E402
+from usct.radiating.inversion import radiating_objective_and_gradient  # noqa: E402
 
 BATH_SPEED = 1.0
 

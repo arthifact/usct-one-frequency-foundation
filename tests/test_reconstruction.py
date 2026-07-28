@@ -7,11 +7,12 @@ reduces the boundary-flux misfit on a tiny disjoint-mesh problem.
 
 import numpy as np
 
-from usct.domain import build_disk
-from usct.forcing import build_boundary_forcing
-from usct.inversion import forward_flux, resample_flux_to
-from usct.medium import feature_speed
-from usct.reconstruction import Stage, adaptive_patterns, reconstruct
+from usct.dtn.inversion import forward_flux
+from usct.dtn.reconstruction import Stage, adaptive_patterns, reconstruct
+from usct.physics.boundary import resample_flux_to
+from usct.physics.domain import build_disk
+from usct.physics.forcing import build_boundary_forcing
+from usct.physics.medium import feature_speed
 
 
 def test_reconstruction_reduces_misfit_and_finds_inclusion():

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import NDArray
 
-from usct.domain import Domain
+from usct.physics.domain import Domain
 
 _FOURIER_PATTERN = re.compile(r"(cos|sin|exp):([0-9]+)\Z")
 

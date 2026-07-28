@@ -36,11 +36,11 @@ import numpy as np  # noqa: E402
 from scipy.sparse.linalg import splu  # noqa: E402
 from scipy.special import jv, jvp  # noqa: E402
 
-from usct.domain import build_disk  # noqa: E402
-from usct.forcing import build_boundary_forcing  # noqa: E402
-from usct.measurement import boundary_mass_matrix  # noqa: E402
-from usct.medium import constant_speed  # noqa: E402
-from usct.operator import assemble_helmholtz  # noqa: E402
+from usct.physics.boundary import boundary_mass_matrix  # noqa: E402
+from usct.physics.domain import build_disk  # noqa: E402
+from usct.physics.forcing import build_boundary_forcing  # noqa: E402
+from usct.physics.medium import constant_speed  # noqa: E402
+from usct.physics.operator import assemble_helmholtz  # noqa: E402
 
 MAX_REFINEMENT = 9  # r=10 (~2.1M dofs) is the practical laptop wall; stop before it
 DOF_CAP = 600_000

@@ -2,8 +2,8 @@
 
 import numpy as np
 
-from usct.domain import Domain
-from usct.forcing import build_boundary_forcing, parse_pattern_name
+from usct.physics.domain import Domain
+from usct.physics.forcing import build_boundary_forcing, parse_pattern_name
 
 
 def test_exact_pattern_grammar() -> None:

@@ -3,7 +3,7 @@
 First slice of the physics-fidelity track. Makes attenuation a **physical,
 spatially-varying field** (not the scalar `eta` numerical stabilizer) and gives a
 **verified adjoint gradient for reconstructing it** alongside sound speed. Built
-on the verified foundation without modifying it: `src/usct/attenuation.py`, gated
+on the verified foundation without modifying it: `src/usct/dtn/attenuation.py`, gated
 by `tests/test_attenuation.py`.
 
 ## Model
@@ -31,7 +31,7 @@ gradients,
 - speed gradient vs central FD (attenuation field present): `< 1e-5`;
 - attenuation gradient vs central FD: `< 1e-5`;
 - at `eta = 0` the complex path reproduces the verified speed-only adjoint
-  (`usct.inversion.objective_and_gradient`) to `1e-8`.
+  (`usct.dtn.inversion.objective_and_gradient`) to `1e-8`.
 
 ## Results (`research/03-attenuation/experiment.py`)
 

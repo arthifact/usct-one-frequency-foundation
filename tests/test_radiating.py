@@ -9,18 +9,18 @@ import numpy as np
 import pytest
 from scipy.special import jn_zeros
 
-from usct.domain import build_disk
-from usct.forcing import build_boundary_forcing
-from usct.measurement import boundary_mass_matrix
-from usct.medium import constant_speed
-from usct.operator import assemble_helmholtz
-from usct.radiating import (
+from usct.dtn.solver import solve_dirichlet
+from usct.physics.boundary import boundary_mass_matrix
+from usct.physics.domain import build_disk
+from usct.physics.forcing import build_boundary_forcing
+from usct.physics.medium import constant_speed
+from usct.physics.operator import assemble_helmholtz
+from usct.radiating.forward import (
     analytic_boundary_pressure,
     forward_boundary_pressure,
-    radiating_objective_and_gradient,
     solve_radiating,
 )
-from usct.solver import solve_dirichlet
+from usct.radiating.inversion import radiating_objective_and_gradient
 
 
 def _boundary_relative_error(numerical, exact, mass):

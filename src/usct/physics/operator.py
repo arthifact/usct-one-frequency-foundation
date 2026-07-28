@@ -4,11 +4,11 @@ from dataclasses import dataclass
 
 import numpy as np
 from scipy import sparse
-from skfem import BilinearForm, asm
+from skfem import BilinearForm, LinearForm, asm
 from skfem.helpers import dot, grad
 
-from usct.domain import Domain
-from usct.medium import Medium
+from usct.physics.domain import Domain
+from usct.physics.medium import Medium
 
 
 @BilinearForm
@@ -19,6 +19,18 @@ def _stiffness_form(u, v, _):
 @BilinearForm
 def _slowness_mass_form(u, v, w):
     return w.slowness_squared * u * v
+
+
+@LinearForm(dtype=np.complex128)
+def _gradient_load_form(v, w):
+    """Adjoint-gradient load ``integral phi_j * conj(lambda) * u``.
+
+    Shared by both sims' inversions (`usct.dtn.inversion`, `usct.radiating.inversion`).
+    Declared complex so both real and imaginary parts survive assembly -- the
+    ``(1 + i eta)`` damping factor mixes them when loss is nonzero.
+    """
+
+    return w.lam_conj * w.u_fwd * v
 
 
 @dataclass(frozen=True)

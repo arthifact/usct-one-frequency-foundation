@@ -9,7 +9,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from usct.simulation import SimulationResult
+from usct.dtn.simulation import SimulationResult
 
 
 @dataclass(frozen=True)

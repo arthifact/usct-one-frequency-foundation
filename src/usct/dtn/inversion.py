@@ -3,7 +3,7 @@
 This is *research* code layered on top of the verified forward foundation. It
 does not modify any verified numerics. It re-uses :func:`assemble_helmholtz`, the
 same explicit interior/boundary Dirichlet elimination proven in
-:mod:`usct.solver`, and the same weak Neumann trace as :mod:`usct.measurement`,
+:mod:`usct.dtn.solver`, and the same weak Neumann trace as :mod:`usct.physics.boundary`,
 and adds three things the foundation deliberately excluded:
 
 1. the complex-L2 boundary-flux misfit in the natural ``L2(boundary)`` inner
@@ -44,30 +44,13 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy import sparse
 from scipy.sparse.linalg import SuperLU, splu
-from skfem import BilinearForm, LinearForm, asm
-from skfem.helpers import dot, grad
+from skfem import asm
 
-from usct.domain import Domain
-from usct.forcing import BoundaryForcing
-from usct.measurement import boundary_mass_matrix
-from usct.medium import Medium
-from usct.operator import assemble_helmholtz
-
-
-@LinearForm(dtype=np.complex128)
-def _gradient_load_form(v, w):
-    """Assemble ``integral phi_j * conj(lambda) * u`` from nodal coefficient fields.
-
-    Declared complex: the assembled load carries both real and imaginary parts,
-    which the ``(1 + i eta)`` damping factor mixes when loss is nonzero.
-    """
-
-    return w.lam_conj * w.u_fwd * v
-
-
-@BilinearForm
-def _stiffness_form(u, v, _):
-    return dot(grad(u), grad(v))
+from usct.physics.boundary import boundary_mass_matrix
+from usct.physics.domain import Domain
+from usct.physics.forcing import BoundaryForcing
+from usct.physics.medium import Medium
+from usct.physics.operator import _gradient_load_form, _stiffness_form, assemble_helmholtz
 
 
 @dataclass(frozen=True)
@@ -137,7 +120,7 @@ def forward_flux(
 ) -> ForwardFlux:
     """Predicted boundary flux ``D = M_b^{-1} (A u)_B`` in ascending boundary-DOF order.
 
-    This is the same observable as :func:`usct.measurement.project_neumann_trace`
+    This is the same observable as :func:`usct.physics.boundary.project_neumann_trace`
     but returned *unsorted* (in ascending boundary-DOF order) so it aligns with
     the boundary mass matrix used by the misfit. Used both to synthesize observed
     data and inside the objective.
@@ -258,27 +241,3 @@ def objective_and_gradient(
         gradient=gradient,
         predicted_flux=predicted,
     )
-
-
-def resample_flux_to(
-    target_theta: NDArray[np.float64],
-    source_theta: NDArray[np.float64],
-    source_flux: NDArray[np.complex128],
-) -> NDArray[np.complex128]:
-    """Periodically interpolate boundary flux from one mesh's angles onto another.
-
-    Used to compare data generated on a fine "observation" mesh against a
-    prediction on a coarser inversion mesh without committing an inverse crime
-    (the two meshes never share nodes).
-    """
-
-    order = np.argsort(source_theta)
-    sorted_theta = source_theta[order]
-    sorted_flux = source_flux[order]
-    two_pi = 2.0 * np.pi
-    resampled = np.empty((target_theta.size, source_flux.shape[1]), dtype=np.complex128)
-    for pattern in range(source_flux.shape[1]):
-        real = np.interp(target_theta, sorted_theta, sorted_flux[:, pattern].real, period=two_pi)
-        imag = np.interp(target_theta, sorted_theta, sorted_flux[:, pattern].imag, period=two_pi)
-        resampled[:, pattern] = real + 1j * imag
-    return resampled

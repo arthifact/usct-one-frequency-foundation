@@ -2,10 +2,10 @@
 
 import numpy as np
 
-from usct.domain import Domain
-from usct.forcing import BoundaryForcing, build_boundary_forcing
-from usct.operator import HelmholtzOperator
-from usct.solver import solve_dirichlet
+from usct.dtn.solver import solve_dirichlet
+from usct.physics.domain import Domain
+from usct.physics.forcing import BoundaryForcing, build_boundary_forcing
+from usct.physics.operator import HelmholtzOperator
 
 
 def test_boundary_values_and_interior_residual(
@@ -44,7 +44,7 @@ def test_one_factorization_handles_all_columns(
     small_domain: Domain,
     small_operator: HelmholtzOperator,
 ) -> None:
-    import usct.solver as solver_module
+    import usct.dtn.solver as solver_module
 
     calls = 0
     original = solver_module.splu

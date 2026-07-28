@@ -3,8 +3,8 @@
 import numpy as np
 from scipy.special import jv
 
-from usct.simulation import SimulationResult
-from usct.verification import ANALYTIC_KR, AnalyticMetrics
+from usct.dtn.simulation import SimulationResult
+from usct.dtn.verification import ANALYTIC_KR, AnalyticMetrics
 
 
 def test_bessel_denominators_are_nonresonant(

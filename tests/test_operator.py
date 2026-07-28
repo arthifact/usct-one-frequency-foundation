@@ -3,9 +3,9 @@
 import numpy as np
 from scipy.sparse.linalg import norm
 
-from usct.domain import Domain
-from usct.medium import Medium, constant_speed
-from usct.operator import assemble_helmholtz
+from usct.physics.domain import Domain
+from usct.physics.medium import Medium, constant_speed
+from usct.physics.operator import assemble_helmholtz
 
 
 def test_operator_shape_dtype_finiteness_and_symmetry(

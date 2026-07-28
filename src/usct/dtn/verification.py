@@ -8,18 +8,19 @@ from numpy.typing import NDArray
 from scipy.special import jv, jvp
 from skfem import BilinearForm, asm
 
-from usct.config import (
+from usct.dtn.measurement import project_neumann_trace
+from usct.dtn.simulation import SimulationResult, simulate_dtn_one_frequency
+from usct.dtn.solver import solve_dirichlet
+from usct.io.config import (
     DomainConfig,
     ForcingConfig,
     MediumConfig,
     SimulationConfig,
     WaveConfig,
 )
-from usct.forcing import BoundaryForcing, build_boundary_forcing
-from usct.measurement import boundary_mass_matrix, project_neumann_trace
-from usct.operator import assemble_helmholtz
-from usct.simulation import SimulationResult, simulate_dtn_one_frequency
-from usct.solver import solve_dirichlet
+from usct.physics.boundary import boundary_mass_matrix
+from usct.physics.forcing import BoundaryForcing, build_boundary_forcing
+from usct.physics.operator import assemble_helmholtz
 
 ANALYTIC_KR = 3.0
 ANALYTIC_MODES = (0, 1, 2)

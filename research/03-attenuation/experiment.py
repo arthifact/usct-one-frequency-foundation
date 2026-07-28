@@ -1,7 +1,7 @@
 """Physics fidelity: attenuation damps resonances, and can be imaged.
 
 Two demonstrations built on the verified joint (c, eta) adjoint
-(`src/usct/attenuation.py`):
+(`src/usct/dtn/attenuation.py`):
 
 1. RESONANCE DAMPING. The lossless hard-Dirichlet disk is a resonant cavity: the
    boundary response blows up whenever kR hits an interior Dirichlet eigenvalue
@@ -28,12 +28,14 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 from scipy.optimize import minimize  # noqa: E402
 
-from usct.attenuation import forward_flux_complex, joint_objective_and_gradient  # noqa: E402
-from usct.domain import build_disk  # noqa: E402
-from usct.forcing import build_boundary_forcing  # noqa: E402
-from usct.inversion import resample_flux_to  # noqa: E402
-from usct.measurement import boundary_mass_matrix  # noqa: E402
-from usct.medium import feature_speed  # noqa: E402
+from usct.dtn.attenuation import forward_flux_complex, joint_objective_and_gradient  # noqa: E402
+from usct.physics.boundary import (
+    boundary_mass_matrix,  # noqa: E402
+    resample_flux_to,  # noqa: E402
+)
+from usct.physics.domain import build_disk  # noqa: E402
+from usct.physics.forcing import build_boundary_forcing  # noqa: E402
+from usct.physics.medium import feature_speed  # noqa: E402
 
 
 def resonance_sweep():

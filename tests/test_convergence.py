@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from usct.verification import run_analytic_disk
+from usct.dtn.verification import run_analytic_disk
 
 
 def test_field_and_flux_errors_decrease_substantially() -> None:

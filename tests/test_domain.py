@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from usct.domain import build_disk
+from usct.physics.domain import build_disk
 
 
 def test_every_dof_is_exactly_interior_or_boundary() -> None:

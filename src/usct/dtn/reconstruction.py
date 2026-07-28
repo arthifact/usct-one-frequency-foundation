@@ -2,7 +2,7 @@
 
 This is the "conventional control" reconstruction called for in ``AGENTS.md``
 step 6: bounded L-BFGS-B on the boundary-flux misfit, using the adjoint-state
-gradient from :mod:`usct.inversion`, with low-to-high frequency continuation
+gradient from :mod:`usct.dtn.inversion`, with low-to-high frequency continuation
 (each stage warm-starts from the previous stage's recovered field).
 
 It is a research driver, not part of the verified forward foundation, and does
@@ -17,10 +17,11 @@ from numpy.typing import NDArray
 from scipy.optimize import minimize
 from skfem import asm
 
-from usct.domain import Domain
-from usct.forcing import build_boundary_forcing
-from usct.inversion import _stiffness_form, objective_and_gradient
-from usct.measurement import boundary_mass_matrix
+from usct.dtn.inversion import objective_and_gradient
+from usct.physics.boundary import boundary_mass_matrix
+from usct.physics.domain import Domain
+from usct.physics.forcing import build_boundary_forcing
+from usct.physics.operator import _stiffness_form
 
 
 @dataclass(frozen=True)

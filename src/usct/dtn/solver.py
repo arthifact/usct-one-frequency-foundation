@@ -7,9 +7,9 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.sparse.linalg import splu
 
-from usct.domain import Domain
-from usct.forcing import BoundaryForcing
-from usct.operator import HelmholtzOperator
+from usct.physics.domain import Domain
+from usct.physics.forcing import BoundaryForcing
+from usct.physics.operator import HelmholtzOperator
 
 
 @dataclass(frozen=True)

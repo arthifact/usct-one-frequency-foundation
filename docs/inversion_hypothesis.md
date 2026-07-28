@@ -5,8 +5,8 @@ regime.** This note records the method, the verified result, and — just as
 importantly — what is *not* yet proven.
 
 This is research layered on top of the verified forward foundation. No verified
-forward numerics were modified. The new code is `src/usct/inversion.py` (adjoint
-gradient + objective), `src/usct/reconstruction.py` (the L-BFGS-B continuation
+forward numerics were modified. The new code is `src/usct/dtn/inversion.py` (adjoint
+gradient + objective), `src/usct/dtn/reconstruction.py` (the L-BFGS-B continuation
 driver), and `research/01-adjoint-fwi/experiment.py` (the experiment). Correctness is gated
 by `tests/test_adjoint.py`.
 

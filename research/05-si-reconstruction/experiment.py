@@ -28,16 +28,16 @@ import numpy as np  # noqa: E402
 from scipy.optimize import minimize  # noqa: E402
 from skfem import asm  # noqa: E402
 
-from usct.domain import build_disk  # noqa: E402
-from usct.forcing import build_boundary_forcing  # noqa: E402
-from usct.inversion import _stiffness_form, resample_flux_to  # noqa: E402
-from usct.measurement import boundary_mass_matrix  # noqa: E402
-from usct.medium import feature_speed  # noqa: E402
-from usct.radiating import (  # noqa: E402
-    forward_boundary_pressure,
-    full_boundary_mass,
-    radiating_objective_and_gradient,
+from usct.physics.boundary import (
+    boundary_mass_matrix,  # noqa: E402
+    resample_flux_to,  # noqa: E402
 )
+from usct.physics.domain import build_disk  # noqa: E402
+from usct.physics.forcing import build_boundary_forcing  # noqa: E402
+from usct.physics.medium import feature_speed  # noqa: E402
+from usct.physics.operator import _stiffness_form  # noqa: E402
+from usct.radiating.forward import forward_boundary_pressure, full_boundary_mass  # noqa: E402
+from usct.radiating.inversion import radiating_objective_and_gradient  # noqa: E402
 
 RADIUS = 0.10  # metres
 BATH_SPEED = 1500.0  # m/s (water)
