@@ -22,4 +22,4 @@ dist/
 
 # Reproducible simulation and research outputs
 runs/
-research/outputs/
+research/*/outputs/

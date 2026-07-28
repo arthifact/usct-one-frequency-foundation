@@ -33,7 +33,7 @@ gradients,
 - at `eta = 0` the complex path reproduces the verified speed-only adjoint
   (`usct.inversion.objective_and_gradient`) to `1e-8`.
 
-## Results (`research/attenuation_experiment.py`)
+## Results (`research/03-attenuation/experiment.py`)
 
 **1. Attenuation damps the cavity resonances.** Driving mode `m=2` and sweeping
 `kR`, the lossless boundary response spikes at every interior Dirichlet

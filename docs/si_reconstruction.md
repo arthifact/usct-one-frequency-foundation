@@ -3,7 +3,7 @@
 The honest translation test. Everything the earlier proofs did in dimensionless
 units with comfortable 8-15% contrasts, redone in **real SI units** at the
 **few-percent contrast real soft tissue actually shows** — on the physically
-faithful radiating boundary. `research/si_reconstruction.py`; the dimensional
+faithful radiating boundary. `research/05-si-reconstruction/experiment.py`; the dimensional
 correctness it depends on is locked by a test (below).
 
 ## Setup (water-tank / breast scale)

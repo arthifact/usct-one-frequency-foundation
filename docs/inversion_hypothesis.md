@@ -7,7 +7,7 @@ importantly — what is *not* yet proven.
 This is research layered on top of the verified forward foundation. No verified
 forward numerics were modified. The new code is `src/usct/inversion.py` (adjoint
 gradient + objective), `src/usct/reconstruction.py` (the L-BFGS-B continuation
-driver), and `research/fwi_experiment.py` (the experiment). Correctness is gated
+driver), and `research/01-adjoint-fwi/experiment.py` (the experiment). Correctness is gated
 by `tests/test_adjoint.py`.
 
 ## The question
@@ -62,7 +62,7 @@ gradient:
 
 ## Result
 
-`research/fwi_experiment.py` → `research/outputs/fwi_reconstruction.png`.
+`research/01-adjoint-fwi/experiment.py` → `research/01-adjoint-fwi/outputs/fwi_reconstruction.png`.
 
 Two-inclusion phantom (a `+0.15` "tumor" and a `-0.08` "cyst" on water `c = 1`,
 unit disk). Observed flux synthesized on a **33k-DOF mesh** (refinements=7),
@@ -136,6 +136,6 @@ bearing gaps, roughly in order of how much they could change the picture:
 
     python -m pytest tests/test_adjoint.py tests/test_reconstruction.py \
         tests/test_attenuation.py tests/test_radiating.py -q
-    python research/fwi_experiment.py           # writes research/outputs/
-    python research/radiating_experiment.py
-    python research/si_reconstruction.py
+    python research/01-adjoint-fwi/experiment.py           # writes its outputs/
+    python research/04-radiating-boundary/experiment.py
+    python research/05-si-reconstruction/experiment.py

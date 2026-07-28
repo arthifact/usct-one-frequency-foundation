@@ -1,7 +1,7 @@
 # Foundation fidelity: the noise-tolerance curve
 
 Replaces "1% noise worked once" with a measured breakdown curve — which *is* the
-hardware SNR requirement. `research/noise_tolerance.py` sweeps the measurement-
+hardware SNR requirement. `research/06-noise-tolerance/experiment.py` sweeps the measurement-
 noise fraction on the realistic-contrast SI radiating setup (same phantom and
 continuation as `docs/si_reconstruction.md`), two independent noise draws per
 level, and records how reconstruction error grows. Clean boundary data is computed

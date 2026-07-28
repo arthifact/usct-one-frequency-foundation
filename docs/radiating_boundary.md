@@ -48,7 +48,7 @@ share no zeros). The pole is gone from the math, not merely damped.
 - **Adjoint gradient** vs central finite differences (lossless and regularized):
   `< 1e-5`.
 
-## Results (`research/radiating_experiment.py`)
+## Results (`research/04-radiating-boundary/experiment.py`)
 
 **1. Resonances removed at the source.** Sweeping `kR ∈ [3, 12]` for mode `m=2`,
 the DtN cavity peaks at `~3.9e3` at exactly the Bessel zeros

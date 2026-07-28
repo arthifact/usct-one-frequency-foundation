@@ -1,6 +1,6 @@
 # USCT One-Frequency Foundation — Durable Project Context
 
-Last updated: 2026-07-24
+Last updated: 2026-07-28
 
 This is the short, canonical handoff for humans, coding agents, and future chat
 sessions. Read it before changing the project. For deeper explanations, follow
@@ -37,7 +37,9 @@ complex Helmholtz solve
 ideal complex outward boundary-flux response D = I + iQ
 ```
 
-There is no inversion in the current `src/usct` package.
+The `src/usct` package's **verified foundation** is forward-only. A separate,
+**verified research layer** (`inversion`, `reconstruction`, `attenuation`,
+`radiating`) is layered on top without modifying it — see §7 and `research/LOG.md`.
 
 ## 2. Exact mathematical contract currently implemented
 
@@ -142,10 +144,10 @@ Interpretation:
 
 ## 5. Current verified status
 
-Snapshot as of 2026-07-24:
+Snapshot as of 2026-07-28:
 
 - Python 3.14, NumPy, SciPy, scikit-fem, Matplotlib, pytest, and Ruff only.
-- `pytest -q`: 33 tests pass.
+- `pytest -q`: 58 tests pass (foundation + verified research layer).
 - `ruff check .`: passes.
 - `python -m usct verify`: all analytic, residual, sign, linearity, boundary,
   Fourier-identity, and convergence checks pass.
@@ -219,9 +221,9 @@ the verified foundation without modifying it — see `docs/inversion_hypothesis.
   (`src/usct/reconstruction.py`);
 - different-mesh synthetic observations with additive noise, and a first
   end-to-end recovery + cold-start (cycle-skipping) control
-  (`research/fwi_experiment.py`);
+  (`research/01-adjoint-fwi/experiment.py`);
 - kR scaling study locating the direct-solver cost and pollution walls
-  (`research/kr_scaling.py`, `docs/kr_scaling.md`): factor time ~ N^1.38,
+  (`research/02-kr-scaling/experiment.py`, `docs/kr_scaling.md`): factor time ~ N^1.38,
   pollution forces DOFs ~ (kR)^3, 2D research ceiling kR ≈ 50–80;
 - spatially-varying **attenuation** as a physical field with a **verified** joint
   (c, eta) adjoint gradient (`src/usct/attenuation.py`,
@@ -234,14 +236,14 @@ the verified foundation without modifying it — see `docs/inversion_hypothesis.
   boundary pressure (velocity-in/pressure-out). Analytic Bessel-verified; adjoint
   FD-verified. Removes the interior resonances at the source (~11800x vs the DtN
   cavity, no eta), and *improves* reconstruction (relative RMS 0.197 vs 0.30);
-- **realistic-contrast SI reconstruction** (`research/si_reconstruction.py`,
+- **realistic-contrast SI reconstruction** (`research/05-si-reconstruction/experiment.py`,
   `docs/si_reconstruction.md`): 0.10 m disk, water 1500 m/s, tissue contrasts
   under ~5%, radiating boundary, frequency continuation kR=5/10/16 (11.9/23.9/
   38.2 kHz), disjoint-mesh data + 1% noise. Recovers all three features; RMS
   error 5.97 m/s (0.40%), relative RMS 0.289 -- matching the dimensionless proof
   at real tissue contrast in real units. SI exactness locked by
   `test_radiating.py::test_si_scale_invariance` (forward scales by length only);
-- **noise-tolerance curve** (`research/noise_tolerance.py`,
+- **noise-tolerance curve** (`research/06-noise-tolerance/experiment.py`,
   `docs/noise_tolerance.md`): reconstruction error vs measurement noise on the SI
   radiating setup. Resolution-limited (flat ~0.29) below ~10% noise; graceful
   degradation; breakdown (error > 0.5) at ~50% noise (~6 dB SNR); usable to ~20%

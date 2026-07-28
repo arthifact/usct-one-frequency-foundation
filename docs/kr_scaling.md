@@ -6,7 +6,7 @@ This study measures the two walls between here and there. Both are intrinsic to
 solving the high-frequency Helmholtz equation with a sparse **direct**
 factorization — the very thing that makes the adjoint cheap today.
 
-Reproduce: `python research/kr_scaling.py` (writes `research/outputs/kr_scaling.*`).
+Reproduce: `python research/02-kr-scaling/experiment.py` (writes `research/02-kr-scaling/outputs/kr_scaling.*`).
 Dimensionless unit disk, `c = 1`, small loss `eta = 1e-3`; accuracy measured as
 the median relative boundary-flux error over a band of angular modes against the
 exact complex-argument Bessel solution.
