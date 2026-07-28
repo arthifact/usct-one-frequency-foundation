@@ -215,7 +215,10 @@ the verified foundation without modifying it — see `docs/inversion_hypothesis.
   (`src/usct/reconstruction.py`);
 - different-mesh synthetic observations with additive noise, and a first
   end-to-end recovery + cold-start (cycle-skipping) control
-  (`research/fwi_experiment.py`).
+  (`research/fwi_experiment.py`);
+- kR scaling study locating the direct-solver cost and pollution walls
+  (`research/kr_scaling.py`, `docs/kr_scaling.md`): factor time ~ N^1.38,
+  pollution forces DOFs ~ (kR)^3, 2D research ceiling kR ≈ 50–80.
 
 Not implemented:
 
@@ -225,7 +228,7 @@ Not implemented:
 - actual I/Q electronics;
 - physical boundary-mode acquisition and identifiability study;
 - density or attenuation inversion;
-- kR scaling study and the direct-solver wall;
+- iterative/preconditioned Helmholtz solver for high kR / 3D;
 - high-contrast/high-kR frozen cycle-skipping regression;
 - physical phantom or human data;
 - 3D propagation.

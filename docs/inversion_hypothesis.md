@@ -93,13 +93,15 @@ FWI hypothesis is confirmed.** The math and the software loop work end to end.
 This is a proof of *algorithmic* viability, not of the physical instrument. Load-
 bearing gaps, roughly in order of how much they could change the picture:
 
-1. **kR / dimensional reality.** Everything here is dimensionless with `kR ≤ 8`.
-   At a ~10 cm radius and ~1500 m/s, clinically useful (sub-mm) resolution needs
-   `kR ≈ 400–1300`. 2D DOFs grow as `(kR)^2`, so the single direct LU that makes
-   the adjoint cheap here will hit a wall; in 3D, direct solvers are out entirely
-   (high-frequency Helmholtz is the hardest linear-solve regime). A scaling study
-   to locate that wall is the next forward-side task, and the swappable `Forward`
-   contract is where an iterative + preconditioned solver would slot in.
+1. **kR / dimensional reality — now measured (`docs/kr_scaling.md`).**
+   Everything here is dimensionless with `kR ≤ 8`; clinically useful resolution
+   needs `kR ≈ 400–1300`. The scaling study confirms the direct-solver walls:
+   factorization time ~ N^1.38 and, worse, the pollution effect forces DOFs to
+   grow like `(kR)^3` to hold accuracy, projecting to ~69 GB and ~9 min per 2D
+   factorization at `kR ≈ 400` (3D is out entirely). Practical 2D research
+   ceiling on the current direct path is `kR ≈ 50–80`. Reaching clinical `kR`/3D
+   means slotting an iterative + preconditioned Helmholtz solver into the
+   swappable `Forward` contract — which is exactly what that contract is for.
 2. **Attenuation.** The model is (near-)lossless; `eta` is currently a numerical
    resonance stabilizer, not a physical absorption model. Real tissue attenuates
    ~0.5–1 dB/cm/MHz, frequency-dependent. Inverting real data will require an
