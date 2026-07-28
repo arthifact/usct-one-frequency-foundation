@@ -121,7 +121,19 @@ bearing gaps, roughly in order of how much they could change the picture:
    A high-contrast / high-`kR` case where cold-start fails outright while
    continuation succeeds should be added as a regression fixture.
 
+## Follow-on foundation results
+
+- `docs/attenuation.md` — attenuation as a physical field (verified joint gradient).
+- `docs/radiating_boundary.md` — the open/radiating boundary that replaces the
+  resonant cavity (analytic-verified, resonances removed, inversion improved).
+- `docs/kr_scaling.md` — the direct-solver cost and pollution walls.
+- `docs/si_reconstruction.md` — realistic few-percent contrast recovered in real
+  SI units on the radiating boundary (relative RMS 0.289; SI exactness verified).
+
 ## Reproduce
 
-    python -m pytest tests/test_adjoint.py tests/test_reconstruction.py -q
-    python research/fwi_experiment.py     # writes research/outputs/
+    python -m pytest tests/test_adjoint.py tests/test_reconstruction.py \
+        tests/test_attenuation.py tests/test_radiating.py -q
+    python research/fwi_experiment.py           # writes research/outputs/
+    python research/radiating_experiment.py
+    python research/si_reconstruction.py

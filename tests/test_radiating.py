@@ -98,3 +98,38 @@ def test_speed_gradient_matches_central_difference(alpha):
     step = 1e-4
     fd = (misfit(base + step * direction) - misfit(base - step * direction)) / (2.0 * step)
     assert abs(analytic - fd) / max(abs(fd), 1e-30) < 1e-5
+
+
+def test_si_scale_invariance():
+    """SI and dimensionless runs at the same kR and contrast agree up to length scale.
+
+    Scaling coordinates by L and speeds by c0 (holding kR and every speed ratio
+    fixed) leaves the radiating operator invariant and scales the boundary
+    pressure by exactly L. This is the guard against a dimensional bug: if SI
+    units were mishandled, the ratio would not be the pure real constant L.
+    """
+
+    length = 0.10  # metres
+    reference_speed = 1500.0  # m/s
+    modes = ("cos:1", "sin:2")
+
+    unit_domain = build_disk(1.0, refinements=5)
+    x = unit_domain.coordinates[:, 0]
+    y = unit_domain.coordinates[:, 1]
+    contrast = 0.03 * np.exp(-((x - 0.2) ** 2 + (y + 0.1) ** 2) / 0.1)  # up to +3%
+
+    forcing_unit = build_boundary_forcing(unit_domain, modes)
+    omega_unit = 6.0
+    pressure_unit = forward_boundary_pressure(
+        unit_domain, 1.0 + contrast, forcing_unit, omega_unit, 0.0, 1.0
+    )
+
+    si_domain = build_disk(length, refinements=5)  # same topology, scaled coordinates
+    forcing_si = build_boundary_forcing(si_domain, modes)
+    omega_si = omega_unit * reference_speed / length  # preserves kR
+    pressure_si = forward_boundary_pressure(
+        si_domain, reference_speed * (1.0 + contrast), forcing_si, omega_si, 0.0, reference_speed
+    )
+
+    ratio = pressure_si / (length * pressure_unit)
+    assert np.allclose(ratio, 1.0, rtol=1e-6, atol=1e-8)

@@ -229,7 +229,14 @@ the verified foundation without modifying it — see `docs/inversion_hypothesis.
   `docs/radiating_boundary.md`). Robin BC `du/dn - i k_b u = g`, observable is
   boundary pressure (velocity-in/pressure-out). Analytic Bessel-verified; adjoint
   FD-verified. Removes the interior resonances at the source (~11800x vs the DtN
-  cavity, no eta), and *improves* reconstruction (relative RMS 0.197 vs 0.30).
+  cavity, no eta), and *improves* reconstruction (relative RMS 0.197 vs 0.30);
+- **realistic-contrast SI reconstruction** (`research/si_reconstruction.py`,
+  `docs/si_reconstruction.md`): 0.10 m disk, water 1500 m/s, tissue contrasts
+  under ~5%, radiating boundary, frequency continuation kR=5/10/16 (11.9/23.9/
+  38.2 kHz), disjoint-mesh data + 1% noise. Recovers all three features; RMS
+  error 5.97 m/s (0.40%), relative RMS 0.289 -- matching the dimensionless proof
+  at real tissue contrast in real units. SI exactness locked by
+  `test_radiating.py::test_si_scale_invariance` (forward scales by length only).
 
 Not implemented:
 
